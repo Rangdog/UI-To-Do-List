@@ -88,9 +88,9 @@ const loading = ref(false)
 const handleSubmit = async () => {
   try {
     loading.value = true
-    const { token, user } = await authService.login(form.value)
-    userStore.setToken(token)
-    userStore.setUser(user)
+    const data = await authService.login(form.value)
+    userStore.setToken(data?.data?.token)
+    userStore.setUser(data?.data?.user)
     router.push('/')
   } catch (error) {
     console.error('Login failed:', error)

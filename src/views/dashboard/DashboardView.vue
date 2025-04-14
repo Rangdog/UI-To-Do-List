@@ -3,7 +3,7 @@
     <div class="flex justify-between items-center">
       <h1 class="text-2xl font-bold text-gray-900">My Projects</h1>
       <button
-        @click="showCreateModal = true"
+       @click="() => { showCreateModal = true; editingProject = null }"
         class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
       >
         Create Project
@@ -12,11 +12,11 @@
 
     <!-- Projects Grid -->
     <div
-      v-if="!loading && projects.length > 0"
+      v-if="!projectStore.loading && projectStore.projects.length > 0"
       class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
     >
       <div
-        v-for="project in projects"
+        v-for="project in projectStore.projects"
         :key="project.id"
         class="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow"
       >
@@ -60,7 +60,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="!loading" class="text-center py-12">
+    <div v-else-if="!projectStore.loading" class="text-center py-12">
       <svg
         class="mx-auto h-12 w-12 text-gray-400"
         fill="none"
@@ -161,7 +161,6 @@ import { useProjectStore } from '@/stores/project'
 import type { Project } from '@/stores/project'
 
 const projectStore = useProjectStore()
-const { projects, loading, createProject, updateProject, deleteProject } = projectStore
 
 const showCreateModal = ref(false)
 const editingProject = ref<Project | null>(null)
@@ -179,9 +178,9 @@ onMounted(async () => {
 const handleSubmit = async () => {
   try {
     if (editingProject.value) {
-      await updateProject(editingProject.value.id, form.value)
+      await projectStore.updateProject(editingProject.value.id, form.value)
     } else {
-      await createProject(form.value)
+      await projectStore.createProject(form.value)
     }
     showCreateModal.value = false
     form.value = { name: '', description: '', is_archived: false }
@@ -204,7 +203,7 @@ const editProject = (project: Project) => {
 const handleDeleteProject = async (id: number) => {
   if (confirm('Are you sure you want to delete this project?')) {
     try {
-      await deleteProject(id)
+      await projectStore.deleteProject(id)
     } catch (error) {
       console.error('Failed to delete project:', error)
     }

@@ -12,6 +12,7 @@ export interface Step {
   status_id: number
   project_id: number
   tasks?: Task[]
+  comments?: Comment[]
 }
 
 export interface Task {
@@ -36,6 +37,12 @@ export interface Comment {
   task_id?: number
 }
 
+interface ResponseAPI {
+  response_key: string
+  response_message: string
+  data: any
+}
+
 export const useStepStore = defineStore('step', () => {
   const steps = ref<Step[]>([])
   const currentStep = ref<Step | null>(null)
@@ -45,8 +52,8 @@ export const useStepStore = defineStore('step', () => {
   const fetchSteps = async (projectId: number) => {
     try {
       loading.value = true
-      const response = await api.get<Step[]>(`/steps?project_id=${projectId}`)
-      steps.value = response.data
+      const response = await api.get<ResponseAPI>(`/steps?project_id=${projectId}`)
+      steps.value = response?.data?.data
     } catch (error) {
       console.error('Failed to fetch steps:', error)
       throw error
@@ -58,8 +65,8 @@ export const useStepStore = defineStore('step', () => {
   const fetchStep = async (id: number) => {
     try {
       loading.value = true
-      const response = await api.get<Step>(`/steps/${id}`)
-      currentStep.value = response.data
+      const response = await api.get<ResponseAPI>(`/steps/${id}`)
+      currentStep.value = response?.data?.data
     } catch (error) {
       console.error('Failed to fetch step:', error)
       throw error
@@ -68,12 +75,46 @@ export const useStepStore = defineStore('step', () => {
     }
   }
 
+  const fetchComment = async(id: number) =>{
+    try {
+        loading.value = true
+        const response = await api.get<ResponseAPI>(`/comments/step/${id}`)
+        console.log(response)
+        const index = steps.value.findIndex((s) => s.id === id)
+        if (index !== -1) {
+          steps.value[index].comments = response?.data?.data ?? []
+        }
+      } catch (error) {
+        console.error('Failed to fetch step:', error)
+        throw error
+      } finally {
+        loading.value = false
+      }
+  }
+
+  const createComment = async(id: number, content: string) =>{
+    try {
+        loading.value = true
+        const response = await api.post<ResponseAPI>(`/comments/step/${id}`, {content: content})
+        const index = steps.value.findIndex((s) => s.id === id)
+        if (index !== -1){
+          steps.value[index].comments?.push(response?.data?.data)
+        }
+        return response
+      } catch (error) {
+        console.error('Failed to fetch step:', error)
+        throw error
+      } finally {
+        loading.value = false
+      }
+  }
+
   const createStep = async (step: Omit<Step, 'id' | 'created_at' | 'updated_at' | 'status_id'>) => {
     try {
       loading.value = true
-      const response = await api.post<Step>('/steps', step)
-      steps.value.push(response.data)
-      return response.data
+      const response = await api.post<ResponseAPI>('/steps', step)
+      steps.value.push(response?.data?.data)
+      return response?.data?.data
     } catch (error) {
       console.error('Failed to create step:', error)
       throw error
@@ -85,17 +126,32 @@ export const useStepStore = defineStore('step', () => {
   const updateStep = async (id: number, step: Partial<Step>) => {
     try {
       loading.value = true
-      const response = await api.patch<Step>(`/steps/${id}`, step)
+      const response = await api.patch<ResponseAPI>(`/steps/${id}`, step)
       const index = steps.value.findIndex((s) => s.id === id)
       if (index !== -1) {
-        steps.value[index] = response.data
+        steps.value[index] = response?.data.data
       }
       if (currentStep.value?.id === id) {
-        currentStep.value = response.data
+        currentStep.value = response?.data.data
       }
-      return response.data
+      return response?.data?.data
     } catch (error) {
       console.error('Failed to update step:', error)
+      throw error
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const updateStepStatus = async (id: number, state: number) => {
+    try {
+      loading.value = true
+      const response = await api.patch<ResponseAPI>(`/steps/status/${id}`, { state: state })
+      const index  =  steps.value.findIndex((t) => t.id === id)
+      steps.value[index] = response?.data?.data
+      return response.data.data
+    } catch (error) {
+      console.error('Failed to update step status:', error)
       throw error
     } finally {
       loading.value = false
@@ -157,24 +213,7 @@ export const useStepStore = defineStore('step', () => {
     }
   }
 
-  const updateTaskStatus = async (id: number, statusId: number) => {
-    try {
-      loading.value = true
-      const response = await api.patch<Task>(`/tasks/${id}`, { status_id: statusId })
-      if (currentStep.value?.tasks) {
-        const index = currentStep.value.tasks.findIndex((t) => t.id === id)
-        if (index !== -1) {
-          currentStep.value.tasks[index] = response.data
-        }
-      }
-      return response.data
-    } catch (error) {
-      console.error('Failed to update task status:', error)
-      throw error
-    } finally {
-      loading.value = false
-    }
-  }
+
 
   const deleteTask = async (id: number) => {
     try {
@@ -191,28 +230,6 @@ export const useStepStore = defineStore('step', () => {
     }
   }
 
-  // Comment methods
-  const createComment = async (comment: Omit<Comment, 'id' | 'created_at' | 'updated_at'>) => {
-    try {
-      loading.value = true
-      const response = await api.post<Comment>('/comments', comment)
-      if (comment.task_id && currentStep.value?.tasks) {
-        const task = currentStep.value.tasks.find((t) => t.id === comment.task_id)
-        if (task) {
-          if (!task.comments) {
-            task.comments = []
-          }
-          task.comments.push(response.data)
-        }
-      }
-      return response.data
-    } catch (error) {
-      console.error('Failed to create comment:', error)
-      throw error
-    } finally {
-      loading.value = false
-    }
-  }
 
   const updateComment = async (id: number, content: string) => {
     try {
@@ -272,11 +289,12 @@ export const useStepStore = defineStore('step', () => {
     deleteStep,
     createTask,
     updateTask,
-    updateTaskStatus,
+    updateStepStatus,
     deleteTask,
     createComment,
     updateComment,
     deleteComment,
     setCurrentStep,
+    fetchComment,
   }
 })

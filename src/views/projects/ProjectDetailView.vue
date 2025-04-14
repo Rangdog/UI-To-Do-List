@@ -59,9 +59,9 @@
           <div class="flex items-center space-x-2">
             <span
               :class="{
-                'bg-green-100 text-green-800': step.status_id === 0,
-                'bg-yellow-100 text-yellow-800': step.status_id === 1,
-                'bg-blue-100 text-blue-800': step.status_id === 2,
+                'bg-green-100 text-green-800': step.status_id === 1,
+                'bg-yellow-100 text-yellow-800': step.status_id === 2,
+                'bg-blue-100 text-blue-800': step.status_id === 3,
               }"
               class="px-2 py-1 text-xs font-medium rounded-full"
             >
@@ -76,8 +76,45 @@
             View Details →
           </router-link>
         </div>
+          <!-- COMMENT SECTION -->
+        <div class="mt-4">
+          <button
+            @click="toggleComments(step.id)"
+            class="text-sm text-indigo-600 hover:underline mb-2"
+          >
+            {{ expandedSteps[step.id] ? 'Thu gọn' : 'Bình luận...' }}
+          </button>
+
+          <div v-if="expandedSteps[step.id]" class="space-y-2">
+            <!-- Danh sách comment -->
+            <ul class="text-sm text-gray-700 space-y-1">
+              <li v-for="step in stepComments[step.id]" :key="index">
+                Account: {{step?.user_id}}
+                <br>
+                Content: {{ step?.content }}
+              </li>
+            </ul>
+
+            <!-- Ô input và nút gửi -->
+            <div class="flex items-center space-x-2 mt-2">
+              <input
+                v-model="newComment[step.id]"
+                type="text"
+                placeholder="Nhập bình luận..."
+                class="flex-1 px-3 py-1 border rounded-md text-sm"
+              />
+              <button
+                @click="addComment(step.id)"
+                class="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              >
+                Gửi
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+
 
     <!-- Empty State -->
     <div v-if="!loading && steps.length === 0" class="text-center py-12">
@@ -174,7 +211,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, reactive } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 import { useStepStore } from '@/stores/step'
@@ -196,6 +233,54 @@ const form = ref({
   description: '',
 })
 
+// Lưu trạng thái mở rộng/thu gọn của từng step
+const expandedSteps = reactive<Record<number, boolean>>({})
+
+// Lưu comment nhập mới cho từng step
+const newComment = reactive<Record<number, string>>({})
+
+// Danh sách comment cho từng step
+const stepComments = reactive<Record<number, string[]>>({})
+
+// Toggle mở rộng/thu gọn
+const toggleComments = async (stepId: number) => {
+  if (!expandedSteps[stepId]) {
+    expandedSteps[stepId] = true
+
+    try {
+      await stepStore.fetchComment(stepId)
+
+      const stepIndex = steps.value.findIndex((s) => s.id === stepId)
+      const step = steps.value[stepIndex]
+
+      // map về dạng text để hiển thị demo
+      stepComments[stepId] = step.comments || []
+    } catch (error) {
+      console.error('Failed to fetch comments:', error)
+    }
+  } else {
+    // Nếu đang mở thì chỉ đóng lại
+    expandedSteps[stepId] = false
+  }
+}
+
+// Thêm comment mới
+const addComment = async (stepId: number) => {  
+  if (!stepComments[stepId]) {
+    stepComments[stepId] = []
+  }
+
+  const comment = newComment[stepId]?.trim()
+  if (comment) {
+    const res = await stepStore.createComment(stepId, comment)
+    if (res?.status === 201) {
+      newComment[stepId] = ''
+    } else {
+      console.warn('Có gì đó sai sai 🤔', res?.status)
+    }
+  }
+}
+
 onMounted(async () => {
   const projectId = Number(route.params.id)
   await projectStore.fetchProject(projectId)
@@ -204,11 +289,11 @@ onMounted(async () => {
 
 const getStatusText = (statusId: number) => {
   switch (statusId) {
-    case 0:
-      return 'Success'
     case 1:
-      return 'Pending'
+      return 'Success'
     case 2:
+      return 'Pending'
+    case 3:
       return 'Processing'
     default:
       return 'Unknown'

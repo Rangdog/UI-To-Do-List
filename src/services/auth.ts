@@ -4,7 +4,7 @@ import api from '@/utils/axios'
 import type { User } from '@/types/user'
 
 // Constants
-const API_URL = 'http://localhost:8000/api' // Update with your actual API URL
+const API_URL = 'http://localhost:8080/api' // Update with your actual API URL
 const TOKEN_COOKIE = 'auth_token'
 const TOKEN_EXPIRY = 7 // days
 
@@ -38,8 +38,9 @@ interface RegisterData extends LoginCredentials {
 }
 
 interface AuthResponse {
-  token: string
-  user: User
+  response_key: string
+  response_message: string
+  data: any
 }
 
 export const authService = {

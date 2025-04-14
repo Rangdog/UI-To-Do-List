@@ -12,6 +12,12 @@ export interface Project {
   user_id: number
 }
 
+interface ResponseAPI {
+  response_key: string
+  response_message: string
+  data: any
+}
+
 export const useProjectStore = defineStore('project', () => {
   const projects = ref<Project[]>([])
   const currentProject = ref<Project | null>(null)
@@ -20,8 +26,8 @@ export const useProjectStore = defineStore('project', () => {
   const fetchProjects = async () => {
     try {
       loading.value = true
-      const response = await api.get<Project[]>('/projects')
-      projects.value = response.data
+      const response = await api.get<ResponseAPI>('/projects')
+      projects.value = response.data.data
     } catch (error) {
       console.error('Failed to fetch projects:', error)
       throw error
@@ -35,9 +41,9 @@ export const useProjectStore = defineStore('project', () => {
   ) => {
     try {
       loading.value = true
-      const response = await api.post<Project>('/projects', project)
-      projects.value.push(response.data)
-      return response.data
+      const response = await api.post<ResponseAPI>('/projects', project)
+      projects.value.push(response?.data?.data)
+      return  response?.data?.data
     } catch (error) {
       console.error('Failed to create project:', error)
       throw error
@@ -49,12 +55,13 @@ export const useProjectStore = defineStore('project', () => {
   const updateProject = async (id: number, project: Partial<Project>) => {
     try {
       loading.value = true
-      const response = await api.patch<Project>(`/projects/${id}`, project)
+      const response = await api.patch<ResponseAPI>(`/projects/${id}`, project)
+      console.log(response)
       const index = projects.value.findIndex((p) => p.id === id)
       if (index !== -1) {
-        projects.value[index] = response.data
+        projects.value[index] = response?.data?.data
       }
-      return response.data
+      return  response?.data?.data
     } catch (error) {
       console.error('Failed to update project:', error)
       throw error
@@ -76,6 +83,20 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
+  const fetchProject = async(id : number) =>{
+    try{
+      loading.value = true
+      const res = await api.get(`/projects/${id}`)
+      currentProject.value = res.data.data
+    }
+    catch (error) {
+      console.error('Failed to delete project:', error)
+      throw error
+    } finally {
+      loading.value = false
+    }
+  }
+
   const setCurrentProject = (project: Project | null) => {
     currentProject.value = project
   }
@@ -88,6 +109,7 @@ export const useProjectStore = defineStore('project', () => {
     createProject,
     updateProject,
     deleteProject,
+    fetchProject,
     setCurrentProject,
   }
 })

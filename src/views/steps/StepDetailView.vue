@@ -14,20 +14,56 @@
           >
             Add Task
           </button>
-          <button
-            @click="editStep"
-            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            Edit Step
-          </button>
+          <div class="flex space-x-4" v-if="step?.status_id === 1">
+            <button
+              @click="openConfirmDialog(3)"
+              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+            >
+              Mark as processing
+            </button>
+            <button
+              @click="openConfirmDialog(2)"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+                Mark as pending
+            </button>
+          </div>
+          <div class="flex space-x-4" v-if="step?.status_id === 2">
+            <button
+              @click="openConfirmDialog(1)"
+              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+            >
+              Mark as success
+            </button>
+            <button
+              @click="openConfirmDialog(3)"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+                Mark as processing
+            </button>
+          </div>
+          <div class="flex space-x-4" v-if="step?.status_id === 3">
+            <button
+              @click="openConfirmDialog(1)"
+              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+            >
+              Mark as success
+            </button>
+            <button
+              @click="openConfirmDialog(2)"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+                Mark as pending
+            </button>
+          </div>
         </div>
       </div>
       <div class="mt-4 flex items-center space-x-2">
         <span
           :class="{
-            'bg-green-100 text-green-800': step?.status_id === 0,
-            'bg-yellow-100 text-yellow-800': step?.status_id === 1,
-            'bg-blue-100 text-blue-800': step?.status_id === 2,
+            'bg-green-100 text-green-800': step?.status_id === 1,
+            'bg-yellow-100 text-yellow-800': step?.status_id === 2,
+            'bg-blue-100 text-blue-800': step?.status_id === 3,
           }"
           class="px-2 py-1 text-xs font-medium rounded-full"
         >
@@ -39,7 +75,7 @@
     <!-- Tasks List -->
     <div class="space-y-4">
       <div
-        v-for="task in tasks"
+        v-for="task in taskStore.tasks"
         :key="task.id"
         class="bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow"
       >
@@ -71,28 +107,28 @@
           <div class="flex items-center space-x-2">
             <span
               :class="{
-                'bg-green-100 text-green-800': task.status_id === 0,
-                'bg-yellow-100 text-yellow-800': task.status_id === 1,
-                'bg-blue-100 text-blue-800': task.status_id === 2,
+                'bg-green-100 text-green-800': task.status_id === 1,
+                'bg-yellow-100 text-yellow-800': task.status_id === 2,
+                'bg-blue-100 text-blue-800': task.status_id === 3,
               }"
               class="px-2 py-1 text-xs font-medium rounded-full"
             >
               {{ getStatusText(task.status_id) }}
             </span>
-            <span class="text-sm text-gray-500"> {{ task.comments?.length || 0 }} comments </span>
+           
           </div>
-          <button
-            @click="toggleTaskStatus(task)"
+          <router-link
+            :to="`/tasks/${task.id}`"
             class="text-sm font-medium text-indigo-600 hover:text-indigo-500"
           >
-            {{ task.status_id === 0 ? 'Mark as Pending' : 'Mark as Complete' }}
-          </button>
+            View Details →
+          </router-link>
         </div>
       </div>
     </div>
 
     <!-- Empty State -->
-    <div v-if="!loading && tasks.length === 0" class="text-center py-12">
+    <div v-if="!loading && taskStore.tasks.length === 0" class="text-center py-12">
       <svg
         class="mx-auto h-12 w-12 text-gray-400"
         fill="none"
@@ -130,6 +166,27 @@
     <div v-else-if="loading" class="text-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
     </div>
+    <!-- Confirm Dialog -->
+    <div v-if="showConfirmDialog" class="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
+            <div class="bg-white rounded-md shadow p-6 w-full max-w-sm">
+                <h2 class="text-lg font-semibold mb-4">Xác nhận thay đổi trạng thái</h2>
+                <p class="text-sm text-gray-700 mb-6">Bạn có chắc muốn chuyển task sang trạng thái "<strong>{{ getStatusText(confirmStatus) }}</strong>" không?</p>
+                <div class="flex justify-end space-x-3">
+                <button
+                    @click="showConfirmDialog = false"
+                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-100"
+                >
+                    Huỷ
+                </button>
+                <button
+                    @click="confirmChangeStatus"
+                    class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700"
+                >
+                    Xác nhận
+                </button>
+            </div>
+        </div>
+      </div>
 
     <!-- Create/Edit Task Modal -->
     <div
@@ -189,35 +246,59 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStepStore } from '@/stores/step'
+import { useTaskStore } from  '@/stores/task'
 import type { Task } from '@/stores/step'
 
 const route = useRoute()
 const stepStore = useStepStore()
+const taskStore = useTaskStore()
 
 const step = computed(() => stepStore.currentStep)
-const tasks = computed(() => step.value?.tasks || [])
 const loading = computed(() => stepStore.loading)
 
 const showCreateTaskModal = ref(false)
 const editingTask = ref<Task | null>(null)
-
+const showConfirmDialog = ref(false)
+const confirmStatus = ref<number | null>(null)
 const form = ref({
   name: '',
   description: '',
 })
 
+
+const openConfirmDialog = (status: number) => {
+  confirmStatus.value = status
+  showConfirmDialog.value = true
+  }
+
+const confirmChangeStatus = async () => {
+  if (!step.value || confirmStatus.value === null) return
+  try {
+      await stepStore.updateStepStatus(step.value.id, confirmStatus.value)
+      console.log(confirmStatus.value)
+      await stepStore.fetchStep(step.value.id) // Refresh lại step
+  } catch (err) {
+      console.error('Failed to update task status:', err)
+  } finally {
+      showConfirmDialog.value = false
+      confirmStatus.value = null
+  }
+}
+
+
 onMounted(async () => {
   const stepId = Number(route.params.id)
   await stepStore.fetchStep(stepId)
+  await taskStore.fetchTasks(stepId)
 })
 
 const getStatusText = (statusId?: number) => {
   switch (statusId) {
-    case 0:
-      return 'Success'
     case 1:
-      return 'Pending'
+      return 'Success'
     case 2:
+      return 'Pending'
+    case 3:
       return 'Processing'
     default:
       return 'Unknown'
@@ -227,12 +308,13 @@ const getStatusText = (statusId?: number) => {
 const handleSubmit = async () => {
   try {
     if (editingTask.value) {
-      await stepStore.updateTask(editingTask.value.id, form.value)
+      await taskStore.updateTask(editingTask.value.id, form.value)
     } else {
-      await stepStore.createTask({
+      await taskStore.createTask({
         ...form.value,
         step_id: Number(route.params.id),
       })
+      
     }
     showCreateTaskModal.value = false
     form.value = { name: '', description: '' }

@@ -34,6 +34,11 @@ const routes: RouteRecordRaw[] = [
         name: 'StepDetail',
         component: () => import('@/views/steps/StepDetailView.vue'),
       },
+      {
+        path: 'tasks/:id',
+        name: 'TaskDetail',
+        component: () => import('@/views/tasks/TaskDetailView.vue'),
+      },
     ],
   },
 ]
