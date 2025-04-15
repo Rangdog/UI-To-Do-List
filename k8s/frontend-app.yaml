@@ -16,7 +16,7 @@ spec:
         - name: frontend
           image: gcr.io/my-blog-454607/frontend-app:latest
           ports:
-            - containerPort: 80
+            - containerPort: 8080
 
 ---
 apiVersion: v1
