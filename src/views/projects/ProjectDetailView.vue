@@ -1,5 +1,77 @@
 <template>
-  <div class="space-y-6">
+  <!-- Filters Section -->
+<div class="flex flex-col sm:flex-row sm:items-end gap-4">
+  <!-- Name Filter -->
+  <div class="flex-1">
+    <label for="filter-name" class="block text-sm font-medium text-gray-700">Project Name</label>
+    <input
+      id="filter-name"
+      v-model="filters.name"
+      type="text"
+      placeholder="Search name..."
+      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+    />
+  </div>
+
+  <!-- Date Range -->
+  <div>
+    <label for="start-date" class="block text-sm font-medium text-gray-700">Start Time</label>
+    <input
+      id="start-date"
+      v-model="filters.startTime"
+      type="date"
+      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+    />
+  </div>
+
+  <div>
+    <label for="end-date" class="block text-sm font-medium text-gray-700">End Time</label>
+    <input
+      id="end-date"
+      v-model="filters.endTime"
+      type="date"
+      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+    />
+  </div>
+
+  <!-- Status Filter Combobox -->
+<div class="mt-6">
+  <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+  <select
+    id="status"
+    v-model="filters.status"
+    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+  >
+    <option :value="null">All</option>
+    <option :value="1">Success</option>
+    <option :value="2">Pending</option>
+    <option :value="3">Processing</option>
+  </select>
+</div>
+
+<!-- IsArchived Checkbox -->
+<div class="flex items-center mt-6">
+    <input
+      id="archived"
+      type="checkbox"
+      v-model="filters.isArchived"
+      class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+    />
+    <label for="archived" class="ml-2 block text-sm text-gray-700">Archived</label>
+  </div>
+
+  <!-- Apply Filter Button -->
+  <div class="mt-6">
+    <button
+      @click="applyFilters"
+      class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+    >
+      Apply
+    </button>
+  </div>
+</div>
+
+  <div class="space-y-6 mt-6">
     <!-- Project Header -->
     <div class="bg-white shadow rounded-lg p-6">
       <div class="flex justify-between items-start">
@@ -87,29 +159,42 @@
 
           <div v-if="expandedSteps[step.id]" class="space-y-2">
             <!-- Danh sách comment -->
-            <ul class="text-sm text-gray-700 space-y-1">
-              <li v-for="step in stepComments[step.id]" :key="index">
-                Account: {{step?.user_id}}
-                <br>
-                Content: {{ step?.content }}
-              </li>
-            </ul>
+              <ul class="text-sm text-gray-700 space-y-1">
+                <li v-for="(comment, index) in stepComments[step.id]" :key="comment.id" class="bg-gray-50 p-2 rounded">
+                  <div v-if="editingCommentId !== comment.id">
+                    <p><strong>Account:</strong> {{ comment.user_id }}</p>
+                    <p><strong>Content:</strong> {{ comment.content }}</p>
+                    <div class="flex space-x-2 mt-1">
+                      <button @click="startEditing(comment)" class="text-sm text-indigo-600 hover:underline">Chỉnh sửa</button>
+                      <button @click="deleteComment(comment.id, step.id)" class="text-sm text-red-600 hover:underline">Xoá</button>
+                    </div>
+                  </div>
 
-            <!-- Ô input và nút gửi -->
-            <div class="flex items-center space-x-2 mt-2">
-              <input
-                v-model="newComment[step.id]"
-                type="text"
-                placeholder="Nhập bình luận..."
-                class="flex-1 px-3 py-1 border rounded-md text-sm"
-              />
-              <button
-                @click="addComment(step.id)"
-                class="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
-              >
-                Gửi
-              </button>
-            </div>
+                  <div v-else class="space-y-1">
+                    <input v-model="editedContent" type="text" class="w-full px-2 py-1 border rounded-md text-sm" />
+                    <div class="flex space-x-2 mt-1">
+                      <button @click="saveCommentEdit(comment.id, step.id)" class="text-sm text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700">Lưu</button>
+                      <button @click="cancelEdit" class="text-sm text-gray-600 px-3 py-1 border rounded hover:bg-gray-200">Huỷ</button>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+
+              <!-- Ô input và nút gửi -->
+              <div class="flex items-center space-x-2 mt-2">
+                <input
+                  v-model="newComment[step.id]"
+                  type="text"
+                  placeholder="Nhập bình luận..."
+                  class="flex-1 px-3 py-1 border rounded-md text-sm"
+                />
+                <button
+                  @click="addComment(step.id)"
+                  class="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                >
+                  Gửi
+                </button>
+              </div>
           </div>
         </div>
       </div>
@@ -156,6 +241,22 @@
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
     </div>
 
+    <div class="mt-6 flex justify-center space-x-2">
+      <button
+        @click="prevPage"
+        class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
+      >
+        Prev
+      </button>
+      <span>Page {{ currentPage }}</span>
+      <button
+        @click="nextPage"
+        class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
+      >
+        Next
+      </button>
+    </div>
+    
     <!-- Create/Edit Step Modal -->
     <div
       v-if="showCreateStepModal"
@@ -211,7 +312,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, reactive } from 'vue'
+import { ref, onMounted, computed, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 import { useStepStore } from '@/stores/step'
@@ -233,6 +334,93 @@ const form = ref({
   description: '',
 })
 
+const currentPage = ref(1)
+const limit = ref(5)
+const filters = ref({
+  name: '',
+  startTime: '',
+  endTime: '',
+  status: null as number | null,
+  isArchived: false,
+})
+
+const applyFilters = async () => {
+  try {
+    await stepStore.fetchFilteredSteps({
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      status: filters.value.status || 0,
+      isArchived: filters.value.isArchived,
+      page: currentPage.value,
+      limit: limit.value,
+      project_id: project?.value?.id,
+    })
+  } catch (error) {
+    console.error('Error while applying filters:', error)
+  }
+}
+
+
+watch(filters, () => {
+  currentPage.value = 1
+  stepStore.fetchFilteredSteps(
+    {
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      status: filters.value.status || 0,
+      isArchived: filters.value.isArchived,
+      page: currentPage.value,
+      limit: limit.value,
+      project_id: project?.value?.id,
+    }
+  )
+}, { deep: true })
+
+const nextPage = () => {
+  currentPage.value++
+  stepStore.fetchFilteredSteps(
+    {
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      status: filters.value.status || 0,
+      isArchived: filters.value.isArchived,
+      page: currentPage.value,
+      limit: limit.value,
+      project_id: project?.value?.id,
+    }
+  )   
+}
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+    stepStore.fetchFilteredSteps(
+    {
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      status: filters.value.status || 0,
+      isArchived: filters.value.isArchived,
+      page: currentPage.value,
+      limit: limit.value,
+      project_id: project?.value?.id,
+    }
+    )
+  }
+}
+
+interface Comment {
+  id: number
+  content: string
+  created_at: string
+  updated_at: string
+  user_id: number
+  step_id?: number
+  task_id?: number
+}
+
 // Lưu trạng thái mở rộng/thu gọn của từng step
 const expandedSteps = reactive<Record<number, boolean>>({})
 
@@ -240,7 +428,7 @@ const expandedSteps = reactive<Record<number, boolean>>({})
 const newComment = reactive<Record<number, string>>({})
 
 // Danh sách comment cho từng step
-const stepComments = reactive<Record<number, string[]>>({})
+const stepComments = reactive<Record<number, Comment[]>>({})
 
 // Toggle mở rộng/thu gọn
 const toggleComments = async (stepId: number) => {
@@ -339,5 +527,51 @@ const deleteStep = async (id: number) => {
 
 const editProject = () => {
   // TODO: Implement project editing
+}
+
+
+
+const editingCommentId = ref<number | null>(null)
+const editedContent = ref('')
+
+// Bắt đầu chỉnh sửa comment
+const startEditing = (comment: any) => {
+  editingCommentId.value = comment.id
+  editedContent.value = comment.content
+}
+
+// Lưu chỉnh sửa comment
+const saveCommentEdit = async (commentId: number, stepId: number) => {
+  if (!editedContent.value.trim()) return
+
+  const res = await stepStore.updateComment(commentId, editedContent.value)
+  if (res?.status === 200) {
+    // Cập nhật trong stepComments
+    const index = stepComments[stepId].findIndex((c: any) => c.id === commentId)
+    if (index !== -1) {
+      stepComments[stepId][index].content = editedContent.value
+    }
+    editingCommentId.value = null
+    editedContent.value = ''
+  }
+}
+
+// Huỷ chỉnh sửa
+const cancelEdit = () => {
+  editingCommentId.value = null
+  editedContent.value = ''
+}
+
+// Xoá comment
+const deleteComment = async (commentId: number, stepId: number) => {
+  if (confirm('Bạn có chắc muốn xoá comment này?')) {
+    const res = await stepStore.deleteComment(commentId)
+    if (res?.status === 200) {
+      const index = stepComments[stepId].findIndex((c: any) => c.id === commentId)
+      if (index !== -1) {
+        stepComments[stepId].splice(index, 1)
+      }
+    }
+  }
 }
 </script>

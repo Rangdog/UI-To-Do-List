@@ -65,27 +65,72 @@
       </div>
 
       <!-- Ô input và nút gửi -->
-    <div class="flex items-center space-x-2 mt-2">
+      <div class="flex items-center space-x-2 mt-2">
         <input
-        v-model="newComment"
-        type="text"
-        placeholder="Comment..."
-        class="flex-1 px-3 py-1 border rounded-md text-sm"
+          v-model="newComment"
+          type="text"
+          placeholder="Comment..."
+          class="flex-1 px-3 py-1 border rounded-md text-sm"
         />
         <button
-        @click="addComment(task.id)"
-        class="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
+          @click="addComment(task?.id || 1)"
+          class="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
         >
-        Gửi
+          Gửi
         </button>
-    </div>
-    <!-- Danh sách comment -->
-    <ul class="text-sm text-gray-700 space-y-1">
-        <li v-for="comment in taskStore.comment" :key="index">
-        Account: {{ comment?.user_id }}<br />
-        Nội dung:   {{ comment?.content }}
+      </div>
+
+      <!-- Danh sách comment -->
+      <ul class="text-sm text-gray-700 space-y-2 mt-2">
+        <li
+          v-for="(comment, index) in taskStore.comment"
+          :key="index"
+          class="bg-gray-50 p-2 rounded"
+        >
+          <!-- Hiển thị bình thường -->
+          <div v-if="editingCommentId !== comment.id">
+            <p><strong>Account:</strong> {{ comment?.user_id }}</p>
+            <p><strong>Nội dung:</strong> {{ comment?.content }}</p>
+            <div class="flex space-x-3 mt-1">
+              <button
+                @click="startEditing(comment)"
+                class="text-sm text-indigo-600 hover:underline"
+              >
+                Chỉnh sửa
+              </button>
+              <button
+                @click="deleteComment(comment.id)"
+                class="text-sm text-red-600 hover:underline"
+              >
+                Xoá
+              </button>
+            </div>
+          </div>
+
+          <!-- Chế độ chỉnh sửa -->
+          <div v-else class="space-y-1">
+            <input
+              v-model="editedContent"
+              type="text"
+              class="w-full px-2 py-1 border rounded-md text-sm"
+            />
+            <div class="flex space-x-2 mt-1">
+              <button
+                @click="saveCommentEdit(comment.id)"
+                class="text-sm text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700"
+              >
+                Lưu
+              </button>
+              <button
+                @click="cancelEdit"
+                class="text-sm text-gray-600 px-3 py-1 border rounded hover:bg-gray-200"
+              >
+                Huỷ
+              </button>
+            </div>
+          </div>
         </li>
-    </ul>
+      </ul>
     
   
       <!-- Loading State -->
@@ -98,7 +143,7 @@
         <div v-if="showConfirmDialog" class="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
             <div class="bg-white rounded-md shadow p-6 w-full max-w-sm">
                 <h2 class="text-lg font-semibold mb-4">Xác nhận thay đổi trạng thái</h2>
-                <p class="text-sm text-gray-700 mb-6">Bạn có chắc muốn chuyển task sang trạng thái "<strong>{{ getStatusText(confirmStatus) }}</strong>" không?</p>
+                <p class="text-sm text-gray-700 mb-6">Bạn có chắc muốn chuyển task sang trạng thái "<strong>{{ getStatusText(confirmStatus || 1) }}</strong>" không?</p>
                 <div class="flex justify-end space-x-3">
                 <button
                     @click="showConfirmDialog = false"
@@ -187,55 +232,51 @@
     }
   }
   
-  const handleSubmit = async () => {
-    try {
-      if (editingTask.value) {
-        await taskStore.updateTask(editingTask.value.id, form.value)
-      } else {
-        await taskStore.createTask({
-          ...form.value,
-          step_id: Number(route.params.id),
-        })
-        
-      }
-      showCreateTaskModal.value = false
-      form.value = { name: '', description: '' }
-      editingTask.value = null
-    } catch (error) {
-      console.error('Failed to save task:', error)
-    }
-  }
-  
-  const editTask = (task: Task) => {
-    editingTask.value = task
-    form.value = {
-      name: task.name,
-      description: task.description,
-    }
-    showCreateTaskModal.value = true
-  }
-  
-  const deleteTask = async (id: number) => {
-    if (confirm('Are you sure you want to delete this task?')) {
-      try {
-        await stepStore.deleteTask(id)
-      } catch (error) {
-        console.error('Failed to delete task:', error)
-      }
-    }
-  }
-  
-  const toggleTaskStatus = async (task: Task) => {
-    try {
-      const newStatus = task.status_id === 0 ? 1 : 0
-      await stepStore.updateTaskStatus(task.id, newStatus)
-    } catch (error) {
-      console.error('Failed to update task status:', error)
-    }
-  }
   
   const editStep = () => {
     // TODO: Implement step editing
   }
+
+  //comment
+  const editingCommentId = ref<number | null>(null)
+  const editedContent = ref('')
+
+  const startEditing = (comment: any) => {
+    editingCommentId.value = comment.id
+    editedContent.value = comment.content
+  }
+
+  const cancelEdit = () => {
+    editingCommentId.value = null
+    editedContent.value = ''
+  }
+
+  const saveCommentEdit = async (commentId: number) => {
+    if (!editedContent.value.trim()) return
+
+    const res = await taskStore.updateComment(commentId, {
+      content: editedContent.value.trim(),
+    })
+
+    if (res?.status === 200) {
+      await taskStore.fetchComment(task?.value?.id || 0) // hoặc fetch lại nếu cần
+      cancelEdit()
+    } else {
+      console.warn('Cập nhật thất bại 😢')
+    }
+  }
+  
+  const deleteComment = async (commentId: number) => {
+  if (confirm('Bạn có chắc chắn muốn xoá bình luận này?')) {
+    try {
+      await taskStore.deleteComment(commentId)
+      // Cập nhật lại danh sách comment sau khi xoá
+      await taskStore.fetchComment(task?.value?.id || 0) // đảm bảo bạn có taskId hiện tại
+    } catch (error) {
+      console.error('Xoá bình luận thất bại:', error)
+    }
+  }
+}
+
   </script>
   

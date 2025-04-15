@@ -1,5 +1,61 @@
 <template>
-  <div class="space-y-6">
+<!-- Filters Section -->
+<div class="flex flex-col sm:flex-row sm:items-end gap-4">
+  <!-- Name Filter -->
+  <div class="flex-1">
+    <label for="filter-name" class="block text-sm font-medium text-gray-700">Project Name</label>
+    <input
+      id="filter-name"
+      v-model="filters.name"
+      type="text"
+      placeholder="Search name..."
+      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+    />
+  </div>
+
+  <!-- Date Range -->
+  <div>
+    <label for="start-date" class="block text-sm font-medium text-gray-700">Start Time</label>
+    <input
+      id="start-date"
+      v-model="filters.startTime"
+      type="date"
+      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+    />
+  </div>
+
+  <div>
+    <label for="end-date" class="block text-sm font-medium text-gray-700">End Time</label>
+    <input
+      id="end-date"
+      v-model="filters.endTime"
+      type="date"
+      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+    />
+  </div>
+
+  <!-- IsArchived Checkbox -->
+  <div class="flex items-center mt-6">
+    <input
+      id="archived"
+      type="checkbox"
+      v-model="filters.isArchived"
+      class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+    />
+    <label for="archived" class="ml-2 block text-sm text-gray-700">Archived</label>
+  </div>
+
+  <!-- Apply Filter Button -->
+  <div class="mt-6">
+    <button
+      @click="applyFilters"
+      class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+    >
+      Apply
+    </button>
+  </div>
+</div>
+  <div class="space-y-6 mt-6">
     <div class="flex justify-between items-center">
       <h1 class="text-2xl font-bold text-gray-900">My Projects</h1>
       <button
@@ -98,7 +154,21 @@
     <div v-else class="text-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
     </div>
-
+    <div class="mt-6 flex justify-center space-x-2">
+      <button
+        @click="prevPage"
+        class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
+      >
+        Prev
+      </button>
+      <span>Page {{ currentPage }}</span>
+      <button
+        @click="nextPage"
+        class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
+      >
+        Next
+      </button>
+    </div>
     <!-- Create/Edit Project Modal -->
     <div
       v-if="showCreateModal"
@@ -156,7 +226,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useProjectStore } from '@/stores/project'
 import type { Project } from '@/stores/project'
 
@@ -170,10 +240,42 @@ const form = ref({
   description: '',
   is_archived: false,
 })
+const currentPage = ref(1)
+const limit = ref(12)
+const filters = ref({
+  name: '',
+  startTime: '',
+  endTime: '',
+  isArchived: false,
+})
 
 onMounted(async () => {
-  await projectStore.fetchProjects()
+  await projectStore.fetchFilteredProjects(
+      {
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      isArchived: filters.value.isArchived,
+      page: currentPage.value,
+      limit: limit.value,
+    })
 })
+
+
+const applyFilters = async () => {
+  try {
+    await projectStore.fetchFilteredProjects({
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      isArchived: filters.value.isArchived,
+      page: currentPage.value,
+      limit: limit.value,
+    })
+  } catch (error) {
+    console.error('Error while applying filters:', error)
+  }
+}
 
 const handleSubmit = async () => {
   try {
@@ -207,6 +309,48 @@ const handleDeleteProject = async (id: number) => {
     } catch (error) {
       console.error('Failed to delete project:', error)
     }
+  }
+}
+watch(filters, () => {
+  currentPage.value = 1
+  projectStore.fetchFilteredProjects(
+    {
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      isArchived: filters.value.isArchived,
+      page: currentPage.value,
+      limit: limit.value,
+    }
+  )
+}, { deep: true })
+
+const nextPage = () => {
+  currentPage.value++
+  projectStore.fetchFilteredProjects(
+    {
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      isArchived: filters.value.isArchived,
+      page: currentPage.value,
+      limit: limit.value,
+    }
+  )   
+}
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+    projectStore.fetchFilteredProjects(
+      {
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      isArchived: filters.value.isArchived,
+      page: currentPage.value,
+      limit: limit.value,
+    }
+    )
   }
 }
 </script>

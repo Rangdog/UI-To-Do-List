@@ -109,7 +109,7 @@ export const useStepStore = defineStore('step', () => {
       }
   }
 
-  const createStep = async (step: Omit<Step, 'id' | 'created_at' | 'updated_at' | 'status_id'>) => {
+  const createStep = async (step: Omit<Step, 'id' | 'created_at' | 'updated_at' | 'status_id' | 'is_archived'>) => {
     try {
       loading.value = true
       const response = await api.post<ResponseAPI>('/steps', step)
@@ -234,21 +234,10 @@ export const useStepStore = defineStore('step', () => {
   const updateComment = async (id: number, content: string) => {
     try {
       loading.value = true
-      const response = await api.patch<Comment>(`/comments/${id}`, { content })
-      if (currentStep.value?.tasks) {
-        for (const task of currentStep.value.tasks) {
-          if (task.comments) {
-            const index = task.comments.findIndex((c) => c.id === id)
-            if (index !== -1) {
-              task.comments[index] = response.data
-              break
-            }
-          }
-        }
-      }
-      return response.data
+      const response = await api.patch<ResponseAPI>(`/comments/${id}`, {content: content})
+      return response
     } catch (error) {
-      console.error('Failed to update comment:', error)
+      console.error('Failed to fetch step:', error)
       throw error
     } finally {
       loading.value = false
@@ -258,16 +247,10 @@ export const useStepStore = defineStore('step', () => {
   const deleteComment = async (id: number) => {
     try {
       loading.value = true
-      await api.delete(`/comments/${id}`)
-      if (currentStep.value?.tasks) {
-        for (const task of currentStep.value.tasks) {
-          if (task.comments) {
-            task.comments = task.comments.filter((c) => c.id !== id)
-          }
-        }
-      }
+      const response = await api.delete<ResponseAPI>(`/comments/${id}`)
+      return response
     } catch (error) {
-      console.error('Failed to delete comment:', error)
+      console.error('Failed to fetch step:', error)
       throw error
     } finally {
       loading.value = false
@@ -276,6 +259,29 @@ export const useStepStore = defineStore('step', () => {
 
   const setCurrentStep = (step: Step | null) => {
     currentStep.value = step
+  }
+
+
+  const fetchFilteredSteps = async(params: {
+    name?: string
+    startTime?: string
+    endTime?: string
+    status?: number
+    isArchived?:boolean
+    page?:number
+    limit?:number
+    project_id ?:number
+  }) =>{
+    loading.value = true
+    const query = new URLSearchParams()
+    if (params.name) query.append('name', params.name)
+    if (params.startTime) query.append('startTime', params.startTime)
+    if (params.endTime) query.append('endTime', params.endTime)
+    if (params.status) query.append('status', String(params.status))
+    if (params.isArchived !== undefined) query.append('isArchived', String(params.isArchived))
+    const res = await api.get<ResponseAPI>(`/filter/steps/${params.project_id}?name=${query.get('name') ? query.get('name')  : ''}&start_time=${query.get('startTime') ? query.get('startTime') : ''}&end_time=${query.get('endTime') ? query.get('endTime') : ''}&is_archived=${query.get('isArchived')}&state=${query.get('status')? query.get('status') : ''}&page=${params.page}&limit=${params.limit}`)
+    steps.value = res?.data?.data?.data
+    loading.value = false
   }
 
   return {
@@ -296,5 +302,6 @@ export const useStepStore = defineStore('step', () => {
     deleteComment,
     setCurrentStep,
     fetchComment,
+    fetchFilteredSteps,
   }
 })

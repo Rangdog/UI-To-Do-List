@@ -13,6 +13,12 @@ interface AuthState {
   isAuthenticated: boolean
 }
 
+interface AuthResponse {
+  response_key: string
+  response_message: string
+  data: any
+}
+
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
     user: null,
@@ -29,13 +35,13 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(username: string, password: string) {
       try {
-        const { token, user } = await authService.login(username, password)
-        
-        this.token = token
-        this.user = user
+        const data = await authService.login({username, password})
+        console.log(data)
+        this.token = data?.data?.token
+        this.user = data?.data?.user
         this.isAuthenticated = true
         
-        return user
+        return data?.data?.user
       } catch (error) {
         throw error
       }

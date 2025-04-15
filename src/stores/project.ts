@@ -101,6 +101,25 @@ export const useProjectStore = defineStore('project', () => {
     currentProject.value = project
   }
 
+  const fetchFilteredProjects = async(params: {
+    name?: string
+    startTime?: string
+    endTime?: string
+    isArchived?: boolean
+    page?:number
+    limit?:number
+  }) =>{
+    loading.value = true
+    const query = new URLSearchParams()
+    if (params.name) query.append('name', params.name)
+    if (params.startTime) query.append('startTime', params.startTime)
+    if (params.endTime) query.append('endTime', params.endTime)
+    if (params.isArchived !== undefined) query.append('isArchived', String(params.isArchived))
+    const res = await api.get<ResponseAPI>(`/filter/projects?name=${query.get('name') ? query.get('name')  : ''}&start_time=${query.get('startTime') ? query.get('startTime') : ''}&end_time=${query.get('endTime') ? query.get('endTime') : ''}&is_archived=${query.get('isArchived')}&page=${params.page}&limit=${params.limit}`)
+    projects.value = res?.data?.data?.data
+    loading.value = false
+  }
+
   return {
     projects,
     currentProject,
@@ -111,5 +130,6 @@ export const useProjectStore = defineStore('project', () => {
     deleteProject,
     fetchProject,
     setCurrentProject,
+    fetchFilteredProjects,
   }
 })

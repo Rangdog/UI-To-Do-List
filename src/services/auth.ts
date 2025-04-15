@@ -4,7 +4,7 @@ import api from '@/utils/axios'
 import type { User } from '@/types/user'
 
 // Constants
-const API_URL = 'http://localhost:8080/api' // Update with your actual API URL
+const API_URL = 'http://35.185.181.50/api' // Update with your actual API URL
 const TOKEN_COOKIE = 'auth_token'
 const TOKEN_EXPIRY = 7 // days
 
@@ -47,6 +47,7 @@ export const authService = {
   // Login and store token in cookie
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await apiAuth.post<AuthResponse>('/login', credentials)
+    console.log(response.data);
     return response.data
   },
 

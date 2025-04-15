@@ -99,9 +99,7 @@ const loading = ref(false)
 const handleSubmit = async () => {
   try {
     loading.value = true
-    const { token, user } = await authService.register(form.value)
-    userStore.setToken(token)
-    userStore.setUser(user)
+    const data = await authService.register(form.value)
     router.push('/')
   } catch (error) {
     console.error('Registration failed:', error)

@@ -78,7 +78,7 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   // Task methods
-  const createTask = async (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'status_id'>) => {
+  const createTask = async (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'status_id' | 'is_archived'>) => {
     try {
       loading.value = true
       const response = await api.post<ResponseAPI>('/tasks', task)
@@ -139,6 +139,63 @@ export const useTaskStore = defineStore('task', () => {
       } finally {
         loading.value = false
       }
+  }
+
+  const fetchFilteredTasks = async(params: {
+    name?: string
+    startTime?: string
+    endTime?: string
+    status?: number
+    isArchived?:boolean
+    page?:number
+    limit?:number
+    step_id ?:number
+  }) =>{
+    loading.value = true
+    const query = new URLSearchParams()
+    if (params.name) query.append('name', params.name)
+    if (params.startTime) query.append('startTime', params.startTime)
+    if (params.endTime) query.append('endTime', params.endTime)
+    if (params.status) query.append('status', String(params.status))
+    if (params.isArchived !== undefined) query.append('isArchived', String(params.isArchived))
+    const res = await api.get<ResponseAPI>(`/filter/tasks/${params.step_id}?name=${query.get('name') ? query.get('name')  : ''}&start_time=${query.get('startTime') ? query.get('startTime') : ''}&end_time=${query.get('endTime') ? query.get('endTime') : ''}&is_archived=${query.get('isArchived')}&state=${query.get('status')? query.get('status') : ''}&page=${params.page}&limit=${params.limit}`)
+    tasks.value = res?.data?.data?.data
+    loading.value = false
+  }
+
+
+  const updateComment = async (commentId: number, params:{
+    content: string
+  }) =>{
+    try {
+      loading.value = true
+      const response = await api.patch<ResponseAPI>(`/comments/${commentId}`, {content: params.content})
+      const index = comment.value.findIndex((c) => c.id == commentId)
+      comment.value[index] = response?.data?.data
+      return response
+    } catch (error) {
+      console.error('Failed to fetch step:', error)
+      throw error
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const deleteComment = async(commentId: number) => {
+    try {
+      loading.value = true
+      const response = await api.delete<ResponseAPI>(`/comments/${commentId}`)
+      const index = comment.value.findIndex((c) => c.id == commentId)
+      if (index !== -1) {
+        comment.value.splice(index, 1)
+      }
+      return response
+    } catch (error) {
+      console.error('Failed to fetch step:', error)
+      throw error
+    } finally {
+      loading.value = false
+    }
   }
 
 
@@ -239,6 +296,9 @@ export const useTaskStore = defineStore('task', () => {
     updateTaskStatus,
     fetchComment,
     createComment,
+    fetchFilteredTasks,
+    updateComment,
+    deleteComment,
   }
     // deleteTask,
     // createComment,

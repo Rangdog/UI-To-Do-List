@@ -1,5 +1,79 @@
 <template>
-  <div class="space-y-6">
+
+   <!-- Filters Section -->
+<div class="flex flex-col sm:flex-row sm:items-end gap-4">
+  <!-- Name Filter -->
+  <div class="flex-1">
+    <label for="filter-name" class="block text-sm font-medium text-gray-700">Project Name</label>
+    <input
+      id="filter-name"
+      v-model="filters.name"
+      type="text"
+      placeholder="Search name..."
+      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+    />
+  </div>
+
+  <!-- Date Range -->
+  <div>
+    <label for="start-date" class="block text-sm font-medium text-gray-700">Start Time</label>
+    <input
+      id="start-date"
+      v-model="filters.startTime"
+      type="date"
+      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+    />
+  </div>
+
+  <div>
+    <label for="end-date" class="block text-sm font-medium text-gray-700">End Time</label>
+    <input
+      id="end-date"
+      v-model="filters.endTime"
+      type="date"
+      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+    />
+  </div>
+
+  <!-- Status Filter Combobox -->
+<div class="mt-6">
+  <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+  <select
+    id="status"
+    v-model="filters.status"
+    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+  >
+    <option :value="null">All</option>
+    <option :value="1">Success</option>
+    <option :value="2">Pending</option>
+    <option :value="3">Processing</option>
+  </select>
+</div>
+
+<!-- IsArchived Checkbox -->
+<div class="flex items-center mt-6">
+    <input
+      id="archived"
+      type="checkbox"
+      v-model="filters.isArchived"
+      class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+    />
+    <label for="archived" class="ml-2 block text-sm text-gray-700">Archived</label>
+  </div>
+
+  <!-- Apply Filter Button -->
+  <div class="mt-6">
+    <button
+      @click="applyFilters"
+      class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+    >
+      Apply
+    </button>
+  </div>
+</div>
+
+
+  <div class="space-y-6 mt-6">
     <!-- Step Header -->
     <div class="bg-white shadow rounded-lg p-6">
       <div class="flex justify-between items-start">
@@ -166,11 +240,28 @@
     <div v-else-if="loading" class="text-center py-12">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
     </div>
+
+    <div class="mt-6 flex justify-center space-x-2">
+      <button
+        @click="prevPage"
+        class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
+      >
+        Prev
+      </button>
+      <span>Page {{ currentPage }}</span>
+      <button
+        @click="nextPage"
+        class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
+      >
+        Next
+      </button>
+    </div>
+
     <!-- Confirm Dialog -->
     <div v-if="showConfirmDialog" class="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
             <div class="bg-white rounded-md shadow p-6 w-full max-w-sm">
                 <h2 class="text-lg font-semibold mb-4">Xác nhận thay đổi trạng thái</h2>
-                <p class="text-sm text-gray-700 mb-6">Bạn có chắc muốn chuyển task sang trạng thái "<strong>{{ getStatusText(confirmStatus) }}</strong>" không?</p>
+                <p class="text-sm text-gray-700 mb-6">Bạn có chắc muốn chuyển task sang trạng thái "<strong>{{ getStatusText(confirmStatus || 0) }}</strong>" không?</p>
                 <div class="flex justify-end space-x-3">
                 <button
                     @click="showConfirmDialog = false"
@@ -243,7 +334,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStepStore } from '@/stores/step'
 import { useTaskStore } from  '@/stores/task'
@@ -265,6 +356,82 @@ const form = ref({
   description: '',
 })
 
+const currentPage = ref(1)
+const limit = ref(10)
+const filters = ref({
+  name: '',
+  startTime: '',
+  endTime: '',
+  status: null as number | null,
+  isArchived: false,
+})
+
+const applyFilters = async () => {
+  try {
+    await taskStore.fetchFilteredTasks({
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      status: filters.value.status || 0,
+      isArchived: filters.value.isArchived,
+      page: currentPage.value,
+      limit: limit.value,
+      step_id: step?.value?.id,
+    })
+  } catch (error) {
+    console.error('Error while applying filters:', error)
+  }
+}
+
+
+watch(filters, () => {
+  currentPage.value = 1
+  taskStore.fetchFilteredTasks(
+    {
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      status: filters.value.status || 0,
+      isArchived: filters.value.isArchived,
+      page: currentPage.value,
+      limit: limit.value,
+      step_id: step?.value?.id,
+    }
+  )
+}, { deep: true })
+
+const nextPage = () => {
+  currentPage.value++
+  taskStore.fetchFilteredTasks(
+    {
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      status: filters.value.status || 0,
+      isArchived: filters.value.isArchived,
+      page: currentPage.value,
+      limit: limit.value,
+      step_id: step?.value?.id,
+    }
+  )   
+}
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+    taskStore.fetchFilteredTasks(
+    {
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      status: filters.value.status || 0,
+      isArchived: filters.value.isArchived,
+      page: currentPage.value,
+      limit: limit.value,
+      step_id: step?.value?.id,
+    }
+    )
+  }
+}
 
 const openConfirmDialog = (status: number) => {
   confirmStatus.value = status
@@ -343,16 +510,4 @@ const deleteTask = async (id: number) => {
   }
 }
 
-const toggleTaskStatus = async (task: Task) => {
-  try {
-    const newStatus = task.status_id === 0 ? 1 : 0
-    await stepStore.updateTaskStatus(task.id, newStatus)
-  } catch (error) {
-    console.error('Failed to update task status:', error)
-  }
-}
-
-const editStep = () => {
-  // TODO: Implement step editing
-}
 </script>
