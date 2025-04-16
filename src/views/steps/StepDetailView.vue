@@ -578,6 +578,7 @@ const handleSubmit = async () => {
       })
       if (res){
       toast.success('Created task!')
+      stepStore.fetchStep(step?.value?.id||-1)
       }
       else{
         toast.error('Something went wrong!')
