@@ -3,7 +3,7 @@
 <div class="flex flex-col sm:flex-row sm:items-end gap-4">
   <!-- Name Filter -->
   <div class="flex-1">
-    <label for="filter-name" class="block text-sm font-medium text-gray-700">Project Name</label>
+    <label for="filter-name" class="block text-sm font-medium text-gray-700">Step Name</label>
     <input
       id="filter-name"
       v-model="filters.name"
@@ -46,6 +46,24 @@
     <option :value="1">Success</option>
     <option :value="2">Pending</option>
     <option :value="3">Processing</option>
+  </select>
+</div>
+
+ <!-- SoftBy Filter Combobox -->
+ <div class="mt-6">
+  <label for="softBy" class="block text-sm font-medium text-gray-700">Soft by</label>
+  <select
+    id="softBy"
+    v-model="filters.softBy"
+    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+  >
+    <option :value="0">---</option>
+    <option :value="1">Name ASC</option>
+    <option :value="2">Name DESC</option>
+    <option :value="3">created ASC</option>
+    <option :value="4">created DESC</option>
+    <option :value="5">Updated ASC</option>
+    <option :value="6">Updated DESC</option>
   </select>
 </div>
 
@@ -116,7 +134,7 @@
                 />
               </svg>
             </button>
-            <button @click="deleteStep(step.id)" class="text-gray-400 hover:text-red-500">
+            <!-- <button @click="deleteStep(step.id)" class="text-gray-400 hover:text-red-500">
               <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fill-rule="evenodd"
@@ -124,7 +142,7 @@
                   clip-rule="evenodd"
                 />
               </svg>
-            </button>
+            </button> -->
           </div>
         </div>
         <div class="mt-4 flex justify-between items-center">
@@ -139,7 +157,7 @@
             >
               {{ getStatusText(step.status_id) }}
             </span>
-            <span class="text-sm text-gray-500"> {{ step.tasks?.length || 0 }} tasks </span>
+            <span class="text-sm text-gray-500"> {{ step?.Amount}} tasks </span>
           </div>
           <router-link
             :to="`/steps/${step.id}`"
@@ -154,7 +172,7 @@
             @click="toggleComments(step.id)"
             class="text-sm text-indigo-600 hover:underline mb-2"
           >
-            {{ expandedSteps[step.id] ? 'Thu gọn' : 'Bình luận...' }}
+            {{ expandedSteps[step.id] ? 'Collapse' : 'Expand...' }}
           </button>
 
           <div v-if="expandedSteps[step.id]" class="space-y-2">
@@ -165,16 +183,16 @@
                     <p><strong>Account:</strong> {{ comment.user_id }}</p>
                     <p><strong>Content:</strong> {{ comment.content }}</p>
                     <div class="flex space-x-2 mt-1">
-                      <button @click="startEditing(comment)" class="text-sm text-indigo-600 hover:underline">Chỉnh sửa</button>
-                      <button @click="deleteComment(comment.id, step.id)" class="text-sm text-red-600 hover:underline">Xoá</button>
+                      <button @click="startEditing(comment)" class="text-sm text-indigo-600 hover:underline">Edit</button>
+                      <button @click="deleteComment(comment.id, step.id)" class="text-sm text-red-600 hover:underline">Delete</button>
                     </div>
                   </div>
 
                   <div v-else class="space-y-1">
                     <input v-model="editedContent" type="text" class="w-full px-2 py-1 border rounded-md text-sm" />
                     <div class="flex space-x-2 mt-1">
-                      <button @click="saveCommentEdit(comment.id, step.id)" class="text-sm text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700">Lưu</button>
-                      <button @click="cancelEdit" class="text-sm text-gray-600 px-3 py-1 border rounded hover:bg-gray-200">Huỷ</button>
+                      <button @click="saveCommentEdit(comment.id, step.id)" class="text-sm text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700">Save</button>
+                      <button @click="cancelEdit" class="text-sm text-gray-600 px-3 py-1 border rounded hover:bg-gray-200">Cancel</button>
                     </div>
                   </div>
                 </li>
@@ -317,7 +335,9 @@ import { useRoute } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 import { useStepStore } from '@/stores/step'
 import type { Step } from '@/stores/step'
+import { useToast } from 'vue-toastification'
 
+const toast = useToast()
 const route = useRoute()
 const projectStore = useProjectStore()
 const stepStore = useStepStore()
@@ -342,6 +362,7 @@ const filters = ref({
   endTime: '',
   status: null as number | null,
   isArchived: false,
+  softBy: 0,
 })
 
 const applyFilters = async () => {
@@ -352,6 +373,7 @@ const applyFilters = async () => {
       endTime: filters.value.endTime || undefined,
       status: filters.value.status || 0,
       isArchived: filters.value.isArchived,
+      softBy: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
       project_id: project?.value?.id,
@@ -371,6 +393,7 @@ watch(filters, () => {
       endTime: filters.value.endTime || undefined,
       status: filters.value.status || 0,
       isArchived: filters.value.isArchived,
+      softBy: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
       project_id: project?.value?.id,
@@ -387,6 +410,7 @@ const nextPage = () => {
       endTime: filters.value.endTime || undefined,
       status: filters.value.status || 0,
       isArchived: filters.value.isArchived,
+      softBy: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
       project_id: project?.value?.id,
@@ -403,6 +427,7 @@ const prevPage = () => {
       endTime: filters.value.endTime || undefined,
       status: filters.value.status || 0,
       isArchived: filters.value.isArchived,
+      softBy: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
       project_id: project?.value?.id,
@@ -461,10 +486,12 @@ const addComment = async (stepId: number) => {
   const comment = newComment[stepId]?.trim()
   if (comment) {
     const res = await stepStore.createComment(stepId, comment)
-    if (res?.status === 201) {
+    if (res) {
       newComment[stepId] = ''
+      toast.success("Added comment!")
     } else {
-      console.warn('Có gì đó sai sai 🤔', res?.status)
+      toast.warning("Something went wrong!")
+      console.warn('Có gì đó sai sai 🤔')
     }
   }
 }
@@ -472,7 +499,17 @@ const addComment = async (stepId: number) => {
 onMounted(async () => {
   const projectId = Number(route.params.id)
   await projectStore.fetchProject(projectId)
-  await stepStore.fetchSteps(projectId)
+  await stepStore.fetchFilteredSteps({
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      status: filters.value.status || 0,
+      isArchived: filters.value.isArchived,
+      softBy: filters.value.softBy,
+      page: currentPage.value,
+      limit: limit.value,
+      project_id: project?.value?.id,
+    })
 })
 
 const getStatusText = (statusId: number) => {
@@ -491,12 +528,22 @@ const getStatusText = (statusId: number) => {
 const handleSubmit = async () => {
   try {
     if (editingStep.value) {
-      await stepStore.updateStep(editingStep.value.id, form.value)
+      const res = await stepStore.updateStep(editingStep.value.id, form.value)
+      if (res){
+        toast.success('Updated step!')
+      }else{
+        toast.error('Something went wrong!')
+      }
     } else {
-      await stepStore.createStep({
+      const res = await stepStore.createStep({
         ...form.value,
         project_id: Number(route.params.id),
       })
+      if (res){
+        toast.success('Created step!')
+      }else{
+        toast.error('Something went wrong!')
+      }
     }
     showCreateStepModal.value = false
     form.value = { name: '', description: '' }
@@ -545,7 +592,7 @@ const saveCommentEdit = async (commentId: number, stepId: number) => {
   if (!editedContent.value.trim()) return
 
   const res = await stepStore.updateComment(commentId, editedContent.value)
-  if (res?.status === 200) {
+  if (res) {
     // Cập nhật trong stepComments
     const index = stepComments[stepId].findIndex((c: any) => c.id === commentId)
     if (index !== -1) {
@@ -553,6 +600,9 @@ const saveCommentEdit = async (commentId: number, stepId: number) => {
     }
     editingCommentId.value = null
     editedContent.value = ''
+    toast.success("Edited comment!")
+  }else{
+    toast.error("Some thing went wrong!")
   }
 }
 
@@ -564,13 +614,16 @@ const cancelEdit = () => {
 
 // Xoá comment
 const deleteComment = async (commentId: number, stepId: number) => {
-  if (confirm('Bạn có chắc muốn xoá comment này?')) {
+  if (confirm('Are you want delete this comment')) {
     const res = await stepStore.deleteComment(commentId)
-    if (res?.status === 200) {
+    if (res) {
       const index = stepComments[stepId].findIndex((c: any) => c.id === commentId)
       if (index !== -1) {
         stepComments[stepId].splice(index, 1)
       }
+      toast.success("Deleted comment!")
+    }else{
+      toast.error("Something went wrong!")
     }
   }
 }

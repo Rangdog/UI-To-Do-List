@@ -43,10 +43,10 @@ export const useProjectStore = defineStore('project', () => {
       loading.value = true
       const response = await api.post<ResponseAPI>('/projects', project)
       projects.value.push(response?.data?.data)
-      return  response?.data?.data
+      return  response.status === 201
     } catch (error) {
       console.error('Failed to create project:', error)
-      throw error
+      return false
     } finally {
       loading.value = false
     }
@@ -56,15 +56,31 @@ export const useProjectStore = defineStore('project', () => {
     try {
       loading.value = true
       const response = await api.patch<ResponseAPI>(`/projects/${id}`, project)
-      console.log(response)
       const index = projects.value.findIndex((p) => p.id === id)
       if (index !== -1) {
         projects.value[index] = response?.data?.data
       }
-      return  response?.data?.data
+      return response.status === 200
     } catch (error) {
       console.error('Failed to update project:', error)
-      throw error
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const updateStepArchived = async (id: number) => {
+    try {
+      loading.value = true
+      const response = await api.patch<ResponseAPI>(`/projects/archived/${id}`)
+      const index = projects.value.findIndex((p) => p.id === id)
+      if (index !== -1) {
+        projects.value[index] = response?.data?.data
+      }
+      return response.status===200
+    } catch (error) {
+      console.error('Failed to update step status:', error)
+      return false
     } finally {
       loading.value = false
     }
@@ -77,11 +93,12 @@ export const useProjectStore = defineStore('project', () => {
       projects.value = projects.value.filter((p) => p.id !== id)
     } catch (error) {
       console.error('Failed to delete project:', error)
-      throw error
+      return false
     } finally {
       loading.value = false
     }
   }
+  
 
   const fetchProject = async(id : number) =>{
     try{
@@ -106,6 +123,7 @@ export const useProjectStore = defineStore('project', () => {
     startTime?: string
     endTime?: string
     isArchived?: boolean
+    softBy?: number
     page?:number
     limit?:number
   }) =>{
@@ -115,7 +133,8 @@ export const useProjectStore = defineStore('project', () => {
     if (params.startTime) query.append('startTime', params.startTime)
     if (params.endTime) query.append('endTime', params.endTime)
     if (params.isArchived !== undefined) query.append('isArchived', String(params.isArchived))
-    const res = await api.get<ResponseAPI>(`/filter/projects?name=${query.get('name') ? query.get('name')  : ''}&start_time=${query.get('startTime') ? query.get('startTime') : ''}&end_time=${query.get('endTime') ? query.get('endTime') : ''}&is_archived=${query.get('isArchived')}&page=${params.page}&limit=${params.limit}`)
+    if (params.softBy) query.append('softBy', String(params.softBy))
+    const res = await api.get<ResponseAPI>(`/filter/projects?name=${query.get('name') ? query.get('name')  : ''}&start_time=${query.get('startTime') ? query.get('startTime') : ''}&end_time=${query.get('endTime') ? query.get('endTime') : ''}&is_archived=${query.get('isArchived')}&soft_by=${query.get('softBy') ? query.get('softBy') : 0}&page=${params.page}&limit=${params.limit}`)
     projects.value = res?.data?.data?.data
     loading.value = false
   }
@@ -131,5 +150,6 @@ export const useProjectStore = defineStore('project', () => {
     fetchProject,
     setCurrentProject,
     fetchFilteredProjects,
+    updateStepArchived,
   }
 })

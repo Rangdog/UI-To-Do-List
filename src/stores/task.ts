@@ -83,10 +83,10 @@ export const useTaskStore = defineStore('task', () => {
       loading.value = true
       const response = await api.post<ResponseAPI>('/tasks', task)
       tasks.value.push(response?.data?.data)
-      return response.data
+      return response.status === 201
     } catch (error) {
       console.error('Failed to create task:', error)
-      throw error
+      return false
     } finally {
       loading.value = false
     }
@@ -103,10 +103,10 @@ export const useTaskStore = defineStore('task', () => {
       if (currentTask.value?.id === id) {
         currentTask.value = response?.data.data
       }
-      return response?.data?.data
+      return response.status === 200
     } catch (error) {
       console.error('Failed to update task:', error)
-      throw error
+      return false
     } finally {
       loading.value = false
     }
@@ -119,10 +119,25 @@ export const useTaskStore = defineStore('task', () => {
       console.log(response)
       const index  =  tasks.value.findIndex((t) => t.id === id)
       tasks.value[index] = response?.data?.data
-      return response.data.data
+      return response.status === 200
     } catch (error) {
       console.error('Failed to update task status:', error)
-      throw error
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const updateTaskArchived = async (id: number, state: number) => {
+    try {
+      loading.value = true
+      const response = await api.patch<ResponseAPI>(`/tasks/archived/${id}`, { state: state })
+      const index  =  tasks.value.findIndex((t) => t.id === id)
+      tasks.value[index] = response?.data?.data
+      return response.status === 200
+    } catch (error) {
+      console.error('Failed to update task status:', error)
+      return false
     } finally {
       loading.value = false
     }
@@ -147,6 +162,7 @@ export const useTaskStore = defineStore('task', () => {
     endTime?: string
     status?: number
     isArchived?:boolean
+    soft_by?: number
     page?:number
     limit?:number
     step_id ?:number
@@ -158,7 +174,8 @@ export const useTaskStore = defineStore('task', () => {
     if (params.endTime) query.append('endTime', params.endTime)
     if (params.status) query.append('status', String(params.status))
     if (params.isArchived !== undefined) query.append('isArchived', String(params.isArchived))
-    const res = await api.get<ResponseAPI>(`/filter/tasks/${params.step_id}?name=${query.get('name') ? query.get('name')  : ''}&start_time=${query.get('startTime') ? query.get('startTime') : ''}&end_time=${query.get('endTime') ? query.get('endTime') : ''}&is_archived=${query.get('isArchived')}&state=${query.get('status')? query.get('status') : ''}&page=${params.page}&limit=${params.limit}`)
+    if (params.soft_by) query.append('softBy', String(params.soft_by))
+    const res = await api.get<ResponseAPI>(`/filter/tasks/${params.step_id}?name=${query.get('name') ? query.get('name')  : ''}&start_time=${query.get('startTime') ? query.get('startTime') : ''}&end_time=${query.get('endTime') ? query.get('endTime') : ''}&is_archived=${query.get('isArchived')}&state=${query.get('status')? query.get('status') : ''}&soft_by=${query.get('softBy') ? query.get('softBy') : 0}&page=${params.page}&limit=${params.limit}`)
     tasks.value = res?.data?.data?.data
     loading.value = false
   }
@@ -172,10 +189,10 @@ export const useTaskStore = defineStore('task', () => {
       const response = await api.patch<ResponseAPI>(`/comments/${commentId}`, {content: params.content})
       const index = comment.value.findIndex((c) => c.id == commentId)
       comment.value[index] = response?.data?.data
-      return response
+      return response.status === 200
     } catch (error) {
       console.error('Failed to fetch step:', error)
-      throw error
+      return false
     } finally {
       loading.value = false
     }
@@ -189,100 +206,14 @@ export const useTaskStore = defineStore('task', () => {
       if (index !== -1) {
         comment.value.splice(index, 1)
       }
-      return response
+      return response.status === 200
     } catch (error) {
       console.error('Failed to fetch step:', error)
-      throw error
+      return false
     } finally {
       loading.value = false
     }
   }
-
-
-//   const deleteTask = async (id: number) => {
-//     try {
-//       loading.value = true
-//       await api.delete(`/tasks/${id}`)
-//       if (currentStep.value?.tasks) {
-//         currentStep.value.tasks = currentStep.value.tasks.filter((t) => t.id !== id)
-//       }
-//     } catch (error) {
-//       console.error('Failed to delete task:', error)
-//       throw error
-//     } finally {
-//       loading.value = false
-//     }
-//   }
-
-//   // Comment methods
-//   const createComment = async (comment: Omit<Comment, 'id' | 'created_at' | 'updated_at'>) => {
-//     try {
-//       loading.value = true
-//       const response = await api.post<Comment>('/comments', comment)
-//       if (comment.task_id && currentStep.value?.tasks) {
-//         const task = currentStep.value.tasks.find((t) => t.id === comment.task_id)
-//         if (task) {
-//           if (!task.comments) {
-//             task.comments = []
-//           }
-//           task.comments.push(response.data)
-//         }
-//       }
-//       return response.data
-//     } catch (error) {
-//       console.error('Failed to create comment:', error)
-//       throw error
-//     } finally {
-//       loading.value = false
-//     }
-//   }
-
-//   const updateComment = async (id: number, content: string) => {
-//     try {
-//       loading.value = true
-//       const response = await api.patch<Comment>(`/comments/${id}`, { content })
-//       if (currentStep.value?.tasks) {
-//         for (const task of currentStep.value.tasks) {
-//           if (task.comments) {
-//             const index = task.comments.findIndex((c) => c.id === id)
-//             if (index !== -1) {
-//               task.comments[index] = response.data
-//               break
-//             }
-//           }
-//         }
-//       }
-//       return response.data
-//     } catch (error) {
-//       console.error('Failed to update comment:', error)
-//       throw error
-//     } finally {
-//       loading.value = false
-//     }
-//   }
-
-//   const deleteComment = async (id: number) => {
-//     try {
-//       loading.value = true
-//       await api.delete(`/comments/${id}`)
-//       if (currentStep.value?.tasks) {
-//         for (const task of currentStep.value.tasks) {
-//           if (task.comments) {
-//             task.comments = task.comments.filter((c) => c.id !== id)
-//           }
-//         }
-//       }
-//     } catch (error) {
-//       console.error('Failed to delete comment:', error)
-//       throw error
-//     } finally {
-//       loading.value = false
-//     }
-//   }
-
-//   const setCurrentStep = (step: Step | null) => {
-//     currentStep.value = step
-//   }
 
   return {
     tasks,
@@ -299,10 +230,6 @@ export const useTaskStore = defineStore('task', () => {
     fetchFilteredTasks,
     updateComment,
     deleteComment,
+    updateTaskArchived,
   }
-    // deleteTask,
-    // createComment,
-    // updateComment,
-    // deleteComment,
-    // setCurrentStep,
 })

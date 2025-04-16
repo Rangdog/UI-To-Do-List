@@ -4,7 +4,7 @@
 <div class="flex flex-col sm:flex-row sm:items-end gap-4">
   <!-- Name Filter -->
   <div class="flex-1">
-    <label for="filter-name" class="block text-sm font-medium text-gray-700">Project Name</label>
+    <label for="filter-name" class="block text-sm font-medium text-gray-700">Tasks Name</label>
     <input
       id="filter-name"
       v-model="filters.name"
@@ -50,6 +50,24 @@
   </select>
 </div>
 
+    <!-- SoftBy Filter Combobox -->
+<div class="mt-6">
+  <label for="softBy" class="block text-sm font-medium text-gray-700">Soft by</label>
+  <select
+    id="softBy"
+    v-model="filters.softBy"
+    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+  >
+    <option :value="0">---</option>
+    <option :value="1">Name ASC</option>
+    <option :value="2">Name DESC</option>
+    <option :value="3">created ASC</option>
+    <option :value="4">created DESC</option>
+    <option :value="5">Updated ASC</option>
+    <option :value="6">Updated DESC</option>
+  </select>
+</div>
+
 <!-- IsArchived Checkbox -->
 <div class="flex items-center mt-6">
     <input
@@ -60,6 +78,7 @@
     />
     <label for="archived" class="ml-2 block text-sm text-gray-700">Archived</label>
   </div>
+
 
   <!-- Apply Filter Button -->
   <div class="mt-6">
@@ -90,6 +109,12 @@
           </button>
           <div class="flex space-x-4" v-if="step?.status_id === 1">
             <button
+              @click="openConfirmDialog(4)"
+              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+            >
+              Mark as Archived
+            </button>
+            <button
               @click="openConfirmDialog(3)"
               class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
             >
@@ -104,6 +129,12 @@
           </div>
           <div class="flex space-x-4" v-if="step?.status_id === 2">
             <button
+              @click="openConfirmDialog(4)"
+              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+            >
+              Mark as Archived
+            </button>
+            <button
               @click="openConfirmDialog(1)"
               class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
             >
@@ -117,6 +148,12 @@
             </button>
           </div>
           <div class="flex space-x-4" v-if="step?.status_id === 3">
+            <button
+              @click="openConfirmDialog(4)"
+              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+            >
+              Mark as Archived
+            </button>
             <button
               @click="openConfirmDialog(1)"
               class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
@@ -166,7 +203,7 @@
                 />
               </svg>
             </button>
-            <button @click="deleteTask(task.id)" class="text-gray-400 hover:text-red-500">
+            <!-- <button @click="deleteTask(task.id)" class="text-gray-400 hover:text-red-500">
               <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fill-rule="evenodd"
@@ -174,7 +211,7 @@
                   clip-rule="evenodd"
                 />
               </svg>
-            </button>
+            </button> -->
           </div>
         </div>
         <div class="mt-4 flex justify-between items-center">
@@ -267,14 +304,24 @@
                     @click="showConfirmDialog = false"
                     class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-100"
                 >
-                    Huỷ
+                    Cancel
                 </button>
-                <button
-                    @click="confirmChangeStatus"
-                    class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700"
-                >
-                    Xác nhận
-                </button>
+                <div v-if="confirmStatus != 4">
+                      <button
+                        @click="confirmChangeStatus"
+                        class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700"
+                    >
+                        Comfirm
+                    </button>
+                </div>
+                <div v-else>
+                      <button
+                        @click="confirmChangeArchived"
+                        class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700"
+                    >
+                        Comfirm
+                    </button>
+                </div>
             </div>
         </div>
       </div>
@@ -339,6 +386,9 @@ import { useRoute } from 'vue-router'
 import { useStepStore } from '@/stores/step'
 import { useTaskStore } from  '@/stores/task'
 import type { Task } from '@/stores/step'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
 
 const route = useRoute()
 const stepStore = useStepStore()
@@ -364,6 +414,7 @@ const filters = ref({
   endTime: '',
   status: null as number | null,
   isArchived: false,
+  softBy: 0,
 })
 
 const applyFilters = async () => {
@@ -374,6 +425,7 @@ const applyFilters = async () => {
       endTime: filters.value.endTime || undefined,
       status: filters.value.status || 0,
       isArchived: filters.value.isArchived,
+      soft_by: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
       step_id: step?.value?.id,
@@ -393,6 +445,7 @@ watch(filters, () => {
       endTime: filters.value.endTime || undefined,
       status: filters.value.status || 0,
       isArchived: filters.value.isArchived,
+      soft_by: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
       step_id: step?.value?.id,
@@ -409,6 +462,7 @@ const nextPage = () => {
       endTime: filters.value.endTime || undefined,
       status: filters.value.status || 0,
       isArchived: filters.value.isArchived,
+      soft_by: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
       step_id: step?.value?.id,
@@ -425,6 +479,7 @@ const prevPage = () => {
       endTime: filters.value.endTime || undefined,
       status: filters.value.status || 0,
       isArchived: filters.value.isArchived,
+      soft_by: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
       step_id: step?.value?.id,
@@ -441,9 +496,13 @@ const openConfirmDialog = (status: number) => {
 const confirmChangeStatus = async () => {
   if (!step.value || confirmStatus.value === null) return
   try {
-      await stepStore.updateStepStatus(step.value.id, confirmStatus.value)
-      console.log(confirmStatus.value)
-      await stepStore.fetchStep(step.value.id) // Refresh lại step
+      const res = await stepStore.updateStepStatus(step.value.id, confirmStatus.value)
+      if (res){
+        await stepStore.fetchStep(step.value.id) // Refresh lại step
+        toast.success('Changed status')
+      }else{
+        toast.error('Something went wrong')
+      }
   } catch (err) {
       console.error('Failed to update task status:', err)
   } finally {
@@ -452,11 +511,41 @@ const confirmChangeStatus = async () => {
   }
 }
 
+const confirmChangeArchived = async () => {
+    if (!step.value || confirmStatus.value === null) return
+
+    try {
+        const res = await stepStore.updateStepArchived(step.value.id, confirmStatus.value)
+        if (res){
+          await stepStore.fetchStep(step.value.id) // Refresh lại step
+          toast.success('Mark as archived!') // Refresh lại task
+        }else{
+          toast.error('Something went wrong')
+        }
+    } catch (err) {
+        console.error('Failed to update task status:', err)
+    } finally {
+        showConfirmDialog.value = false
+        confirmStatus.value = null
+    }
+    }
+
 
 onMounted(async () => {
   const stepId = Number(route.params.id)
   await stepStore.fetchStep(stepId)
-  await taskStore.fetchTasks(stepId)
+  await taskStore.fetchFilteredTasks(
+    {
+      name: filters.value.name,
+      startTime: filters.value.startTime || undefined,
+      endTime: filters.value.endTime || undefined,
+      status: filters.value.status || 0,
+      isArchived: filters.value.isArchived,
+      soft_by: filters.value.softBy,
+      page: currentPage.value,
+      limit: limit.value,
+      step_id: step?.value?.id,
+    })
 })
 
 const getStatusText = (statusId?: number) => {
@@ -475,13 +564,24 @@ const getStatusText = (statusId?: number) => {
 const handleSubmit = async () => {
   try {
     if (editingTask.value) {
-      await taskStore.updateTask(editingTask.value.id, form.value)
+     const res = await taskStore.updateTask(editingTask.value.id, form.value)
+     if (res){
+      toast.success('Updated task!')
+     }
+     else{
+      toast.error('Something went wrong!')
+     }
     } else {
-      await taskStore.createTask({
+      const res = await taskStore.createTask({
         ...form.value,
         step_id: Number(route.params.id),
       })
-      
+      if (res){
+      toast.success('Created task!')
+      }
+      else{
+        toast.error('Something went wrong!')
+      }
     }
     showCreateTaskModal.value = false
     form.value = { name: '', description: '' }

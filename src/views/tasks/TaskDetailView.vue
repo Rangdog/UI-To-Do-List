@@ -9,6 +9,12 @@
           </div>
           <div class="flex space-x-4" v-if="task?.status_id === 1">
             <button
+              @click="openConfirmDialog(4)"
+              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+            >
+              Mark as Archived
+            </button>
+            <button
               @click="openConfirmDialog(3)"
               class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
             >
@@ -23,6 +29,13 @@
           </div>
           <div class="flex space-x-4" v-if="task?.status_id === 2">
             <button
+              @click="openConfirmDialog(4)"
+              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+            >
+              Mark as Archived
+            </button>
+
+            <button
               @click="openConfirmDialog(1)"
               class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
             >
@@ -36,6 +49,13 @@
             </button>
           </div>
           <div class="flex space-x-4" v-if="task?.status_id === 3">
+            <button
+              @click="openConfirmDialog(4)"
+              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+            >
+              Mark as Archived
+            </button>
+
             <button
               @click="openConfirmDialog(1)"
               class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
@@ -76,7 +96,7 @@
           @click="addComment(task?.id || 1)"
           class="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
         >
-          Gửi
+          Send
         </button>
       </div>
 
@@ -90,19 +110,19 @@
           <!-- Hiển thị bình thường -->
           <div v-if="editingCommentId !== comment.id">
             <p><strong>Account:</strong> {{ comment?.user_id }}</p>
-            <p><strong>Nội dung:</strong> {{ comment?.content }}</p>
+            <p><strong>Content:</strong> {{ comment?.content }}</p>
             <div class="flex space-x-3 mt-1">
               <button
                 @click="startEditing(comment)"
                 class="text-sm text-indigo-600 hover:underline"
               >
-                Chỉnh sửa
+                Edit
               </button>
               <button
                 @click="deleteComment(comment.id)"
                 class="text-sm text-red-600 hover:underline"
               >
-                Xoá
+                Delete
               </button>
             </div>
           </div>
@@ -119,13 +139,13 @@
                 @click="saveCommentEdit(comment.id)"
                 class="text-sm text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700"
               >
-                Lưu
+                Save
               </button>
               <button
                 @click="cancelEdit"
                 class="text-sm text-gray-600 px-3 py-1 border rounded hover:bg-gray-200"
               >
-                Huỷ
+                Cancel
               </button>
             </div>
           </div>
@@ -142,21 +162,31 @@
         <!-- Confirm Dialog -->
         <div v-if="showConfirmDialog" class="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
             <div class="bg-white rounded-md shadow p-6 w-full max-w-sm">
-                <h2 class="text-lg font-semibold mb-4">Xác nhận thay đổi trạng thái</h2>
-                <p class="text-sm text-gray-700 mb-6">Bạn có chắc muốn chuyển task sang trạng thái "<strong>{{ getStatusText(confirmStatus || 1) }}</strong>" không?</p>
+                <h2 class="text-lg font-semibold mb-4">Comfirm change status</h2>
+                <p class="text-sm text-gray-700 mb-6">Are you want change status "<strong>{{ getStatusText(confirmStatus || 1) }}</strong>"?</p>
                 <div class="flex justify-end space-x-3">
                 <button
                     @click="showConfirmDialog = false"
                     class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-100"
                 >
-                    Huỷ
+                    Cancel
                 </button>
-                <button
-                    @click="confirmChangeStatus"
-                    class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700"
-                >
-                    Xác nhận
-                </button>
+                <div v-if="confirmStatus != 4">
+                      <button
+                        @click="confirmChangeStatus"
+                        class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700"
+                    >
+                        Comfirm
+                    </button>
+                </div>
+                <div v-else>
+                      <button
+                        @click="confirmChangeArchived"
+                        class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700"
+                    >
+                        Comfirm
+                    </button>
+                </div>
             </div>
         </div>
         </div>
@@ -166,9 +196,10 @@
   <script setup lang="ts">
   import { ref, onMounted, computed } from 'vue'
   import { useRoute } from 'vue-router'
-  import { useStepStore } from '@/stores/step'
   import { useTaskStore } from  '@/stores/task'
-  import type { Task } from '@/stores/step'
+  import { useToast } from 'vue-toastification'
+
+  const toast = useToast()
   
   const route = useRoute()
   const taskStore = useTaskStore()
@@ -195,9 +226,32 @@
     if (!task.value || confirmStatus.value === null) return
 
     try {
-        await taskStore.updateTaskStatus(task.value.id, confirmStatus.value)
-        console.log(confirmStatus.value)
-        await taskStore.fetchTask(task.value.id) // Refresh lại task
+        const res = await taskStore.updateTaskStatus(task.value.id, confirmStatus.value)
+        if (res){
+          await taskStore.fetchTask(task.value.id)
+          toast.success('Changed status!') // Refresh lại task
+        }else{
+          toast.error('Something went wrong')
+        }
+    } catch (err) {
+        console.error('Failed to update task status:', err)
+    } finally {
+        showConfirmDialog.value = false
+        confirmStatus.value = null
+    }
+    }
+
+    const confirmChangeArchived = async () => {
+    if (!task.value || confirmStatus.value === null) return
+
+    try {
+        const res = await taskStore.updateTaskArchived(task.value.id, confirmStatus.value)
+        if (res){
+          await taskStore.fetchTask(task.value.id)
+          toast.success('Mark as archived!') // Refresh lại task
+        }else{
+          toast.error('Something went wrong')
+        }
     } catch (err) {
         console.error('Failed to update task status:', err)
     } finally {
@@ -227,6 +281,8 @@
         return 'Pending'
       case 3:
         return 'Processing'
+      case 4:
+        return 'Archived'
       default:
         return 'Unknown'
     }
@@ -258,22 +314,30 @@
       content: editedContent.value.trim(),
     })
 
-    if (res?.status === 200) {
+    if (res) {
       await taskStore.fetchComment(task?.value?.id || 0) // hoặc fetch lại nếu cần
       cancelEdit()
+      toast.success('Updated comment!')
     } else {
       console.warn('Cập nhật thất bại 😢')
+      toast.error('Something went wrong!')
     }
   }
   
   const deleteComment = async (commentId: number) => {
-  if (confirm('Bạn có chắc chắn muốn xoá bình luận này?')) {
+  if (confirm('Are you want delete this comment?')) {
     try {
-      await taskStore.deleteComment(commentId)
-      // Cập nhật lại danh sách comment sau khi xoá
-      await taskStore.fetchComment(task?.value?.id || 0) // đảm bảo bạn có taskId hiện tại
+      const res = await taskStore.deleteComment(commentId)
+      if (res){
+        await taskStore.fetchComment(task?.value?.id || 0) 
+        toast.success('Deleted comment!')
+      }
+      else{
+        toast.error('Something went wrong!')
+      }
     } catch (error) {
       console.error('Xoá bình luận thất bại:', error)
+      toast.error('Something went wrong!')
     }
   }
 }

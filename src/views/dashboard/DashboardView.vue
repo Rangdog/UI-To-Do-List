@@ -34,6 +34,24 @@
     />
   </div>
 
+  <!-- SoftBy Filter Combobox -->
+ <div class="mt-6">
+  <label for="softBy" class="block text-sm font-medium text-gray-700">Soft by</label>
+  <select
+    id="softBy"
+    v-model="filters.softBy"
+    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+  >
+    <option :value="0">---</option>
+    <option :value="1">Name ASC</option>
+    <option :value="2">Name DESC</option>
+    <option :value="3">created ASC</option>
+    <option :value="4">created DESC</option>
+    <option :value="5">Updated ASC</option>
+    <option :value="6">Updated DESC</option>
+  </select>
+</div>
+
   <!-- IsArchived Checkbox -->
   <div class="flex items-center mt-6">
     <input
@@ -87,13 +105,13 @@
               </svg>
             </button>
             <button
-              @click="handleDeleteProject(project.id)"
+              @click="handleArchivedProject(project.id)"
               class="text-gray-400 hover:text-red-500"
             >
               <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   fill-rule="evenodd"
-                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                  d="M4 3a1 1 0 000 2h12a1 1 0 100-2H4zm1 4a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2V9a2 2 0 00-2-2H5zm5 2a1 1 0 011 1v1h2a1 1 0 110 2H7a1 1 0 110-2h2v-1a1 1 0 011-1z"
                   clip-rule="evenodd"
                 />
               </svg>
@@ -229,6 +247,9 @@
 import { ref, onMounted, watch } from 'vue'
 import { useProjectStore } from '@/stores/project'
 import type { Project } from '@/stores/project'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
 
 const projectStore = useProjectStore()
 
@@ -247,6 +268,7 @@ const filters = ref({
   startTime: '',
   endTime: '',
   isArchived: false,
+  softBy: 0,
 })
 
 onMounted(async () => {
@@ -256,6 +278,7 @@ onMounted(async () => {
       startTime: filters.value.startTime || undefined,
       endTime: filters.value.endTime || undefined,
       isArchived: filters.value.isArchived,
+      softBy: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
     })
@@ -269,6 +292,7 @@ const applyFilters = async () => {
       startTime: filters.value.startTime || undefined,
       endTime: filters.value.endTime || undefined,
       isArchived: filters.value.isArchived,
+      softBy: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
     })
@@ -280,9 +304,21 @@ const applyFilters = async () => {
 const handleSubmit = async () => {
   try {
     if (editingProject.value) {
-      await projectStore.updateProject(editingProject.value.id, form.value)
+      const res = await projectStore.updateProject(editingProject.value.id, form.value)
+      if (res){
+        toast.success('Updated Project!')
+      }
+      else{
+        toast.error('Something went wrong!')
+      }
     } else {
-      await projectStore.createProject(form.value)
+      const res = await projectStore.createProject(form.value)
+      if (res){
+        toast.success('Created Project!')
+      }
+      else{
+        toast.error('Something went wrong!')
+      }
     }
     showCreateModal.value = false
     form.value = { name: '', description: '', is_archived: false }
@@ -302,10 +338,26 @@ const editProject = (project: Project) => {
   showCreateModal.value = true
 }
 
-const handleDeleteProject = async (id: number) => {
-  if (confirm('Are you sure you want to delete this project?')) {
+const handleArchivedProject = async (id: number) => {
+  if (confirm('Are you sure you want to Archived this project?')) {
     try {
-      await projectStore.deleteProject(id)
+      const res = await projectStore.updateStepArchived(id)
+      if (res){
+        toast.success('Mark as archived!') 
+        projectStore.fetchFilteredProjects(
+            {
+              name: filters.value.name,
+              startTime: filters.value.startTime || undefined,
+              endTime: filters.value.endTime || undefined,
+              isArchived: filters.value.isArchived,
+              softBy: filters.value.softBy,
+              page: currentPage.value,
+              limit: limit.value,
+            }
+          )
+      }else{
+        toast.error('Something went wrong')
+      }
     } catch (error) {
       console.error('Failed to delete project:', error)
     }
@@ -319,6 +371,7 @@ watch(filters, () => {
       startTime: filters.value.startTime || undefined,
       endTime: filters.value.endTime || undefined,
       isArchived: filters.value.isArchived,
+      softBy: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
     }
@@ -333,6 +386,7 @@ const nextPage = () => {
       startTime: filters.value.startTime || undefined,
       endTime: filters.value.endTime || undefined,
       isArchived: filters.value.isArchived,
+      softBy: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
     }
@@ -347,6 +401,7 @@ const prevPage = () => {
       startTime: filters.value.startTime || undefined,
       endTime: filters.value.endTime || undefined,
       isArchived: filters.value.isArchived,
+      softBy: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
     }

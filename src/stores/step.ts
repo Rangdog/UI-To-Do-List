@@ -11,6 +11,7 @@ export interface Step {
   is_archived: boolean
   status_id: number
   project_id: number
+  Amount: number
   tasks?: Task[]
   comments?: Comment[]
 }
@@ -100,24 +101,28 @@ export const useStepStore = defineStore('step', () => {
         if (index !== -1){
           steps.value[index].comments?.push(response?.data?.data)
         }
-        return response
+        return response.status === 201
       } catch (error) {
         console.error('Failed to fetch step:', error)
-        throw error
+        return false
       } finally {
         loading.value = false
       }
   }
 
-  const createStep = async (step: Omit<Step, 'id' | 'created_at' | 'updated_at' | 'status_id' | 'is_archived'>) => {
+  const createStep = async (step: Omit<Step, 'id' | 'created_at' | 'updated_at' | 'status_id' | 'is_archived' | 'Amount'>) => {
     try {
       loading.value = true
       const response = await api.post<ResponseAPI>('/steps', step)
       steps.value.push(response?.data?.data)
-      return response?.data?.data
+      if (response.status === 201){
+        return true
+      }else{
+        return false
+      }
     } catch (error) {
       console.error('Failed to create step:', error)
-      throw error
+      return false
     } finally {
       loading.value = false
     }
@@ -134,10 +139,14 @@ export const useStepStore = defineStore('step', () => {
       if (currentStep.value?.id === id) {
         currentStep.value = response?.data.data
       }
-      return response?.data?.data
+      if (response.status === 200){
+        return true
+      }else{
+        return false
+      }
     } catch (error) {
       console.error('Failed to update step:', error)
-      throw error
+      return false
     } finally {
       loading.value = false
     }
@@ -149,10 +158,25 @@ export const useStepStore = defineStore('step', () => {
       const response = await api.patch<ResponseAPI>(`/steps/status/${id}`, { state: state })
       const index  =  steps.value.findIndex((t) => t.id === id)
       steps.value[index] = response?.data?.data
-      return response.data.data
+      return response.status===200
     } catch (error) {
       console.error('Failed to update step status:', error)
-      throw error
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const updateStepArchived = async (id: number, state: number) => {
+    try {
+      loading.value = true
+      const response = await api.patch<ResponseAPI>(`/steps/archived/${id}`)
+      const index  =  steps.value.findIndex((t) => t.id === id)
+      steps.value[index] = response?.data?.data
+      return response.status===200
+    } catch (error) {
+      console.error('Failed to update step status:', error)
+      return false
     } finally {
       loading.value = false
     }
@@ -235,10 +259,10 @@ export const useStepStore = defineStore('step', () => {
     try {
       loading.value = true
       const response = await api.patch<ResponseAPI>(`/comments/${id}`, {content: content})
-      return response
+      return response.status === 200
     } catch (error) {
       console.error('Failed to fetch step:', error)
-      throw error
+      false
     } finally {
       loading.value = false
     }
@@ -248,10 +272,10 @@ export const useStepStore = defineStore('step', () => {
     try {
       loading.value = true
       const response = await api.delete<ResponseAPI>(`/comments/${id}`)
-      return response
+      return response.status===200
     } catch (error) {
       console.error('Failed to fetch step:', error)
-      throw error
+      return false
     } finally {
       loading.value = false
     }
@@ -268,6 +292,7 @@ export const useStepStore = defineStore('step', () => {
     endTime?: string
     status?: number
     isArchived?:boolean
+    softBy?: number
     page?:number
     limit?:number
     project_id ?:number
@@ -279,7 +304,9 @@ export const useStepStore = defineStore('step', () => {
     if (params.endTime) query.append('endTime', params.endTime)
     if (params.status) query.append('status', String(params.status))
     if (params.isArchived !== undefined) query.append('isArchived', String(params.isArchived))
-    const res = await api.get<ResponseAPI>(`/filter/steps/${params.project_id}?name=${query.get('name') ? query.get('name')  : ''}&start_time=${query.get('startTime') ? query.get('startTime') : ''}&end_time=${query.get('endTime') ? query.get('endTime') : ''}&is_archived=${query.get('isArchived')}&state=${query.get('status')? query.get('status') : ''}&page=${params.page}&limit=${params.limit}`)
+    if (params.softBy) query.append('softBy', String(params.softBy))
+    const res = await api.get<ResponseAPI>(`/filter/steps/${params.project_id}?name=${query.get('name') ? query.get('name')  : ''}&start_time=${query.get('startTime') ? query.get('startTime') : ''}&end_time=${query.get('endTime') ? query.get('endTime') : ''}&is_archived=${query.get('isArchived')}&state=${query.get('status')? query.get('status') : ''}&soft_by=${query.get('softBy') ? query.get('softBy'):0}&page=${params.page}&limit=${params.limit}`)
+    console.log(res)
     steps.value = res?.data?.data?.data
     loading.value = false
   }
@@ -303,5 +330,6 @@ export const useStepStore = defineStore('step', () => {
     setCurrentStep,
     fetchComment,
     fetchFilteredSteps,
+    updateStepArchived,
   }
 })
