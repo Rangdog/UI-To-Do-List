@@ -28,4 +28,6 @@ export const useUserStore = defineStore('user', () => {
     setToken,
     clearUser,
   }
+},{
+  persist: true //
 })

@@ -18,8 +18,20 @@ interface ResponseAPI {
   data: any
 }
 
+export class ProjectAgile {
+  id: string
+  title: string
+  items: any[] = []
+
+  constructor() {
+    this.id = "";
+    this.title = "";
+  }
+}
+
 export const useProjectStore = defineStore('project', () => {
   const projects = ref<Project[]>([])
+  const projectsAgile = ref<ProjectAgile[]>([])
   const currentProject = ref<Project | null>(null)
   const loading = ref(false)
 
@@ -43,7 +55,7 @@ export const useProjectStore = defineStore('project', () => {
       loading.value = true
       const response = await api.post<ResponseAPI>('/projects', project)
       projects.value.push(response?.data?.data)
-      return  response.status === 201
+      return response.status === 201
     } catch (error) {
       console.error('Failed to create project:', error)
       return false
@@ -77,7 +89,7 @@ export const useProjectStore = defineStore('project', () => {
       if (index !== -1) {
         projects.value[index] = response?.data?.data
       }
-      return response.status===200
+      return response.status === 200
     } catch (error) {
       console.error('Failed to update step status:', error)
       return false
@@ -98,10 +110,10 @@ export const useProjectStore = defineStore('project', () => {
       loading.value = false
     }
   }
-  
 
-  const fetchProject = async(id : number) =>{
-    try{
+
+  const fetchProject = async (id: number) => {
+    try {
       loading.value = true
       const res = await api.get(`/projects/${id}`)
       currentProject.value = res.data.data
@@ -118,15 +130,15 @@ export const useProjectStore = defineStore('project', () => {
     currentProject.value = project
   }
 
-  const fetchFilteredProjects = async(params: {
+  const fetchFilteredProjects = async (params: {
     name?: string
     startTime?: string
     endTime?: string
     isArchived?: boolean
     softBy?: number
-    page?:number
-    limit?:number
-  }) =>{
+    page?: number
+    limit?: number
+  }) => {
     loading.value = true
     const query = new URLSearchParams()
     if (params.name) query.append('name', params.name)
@@ -134,15 +146,59 @@ export const useProjectStore = defineStore('project', () => {
     if (params.endTime) query.append('endTime', params.endTime)
     if (params.isArchived !== undefined) query.append('isArchived', String(params.isArchived))
     if (params.softBy) query.append('softBy', String(params.softBy))
-    const res = await api.get<ResponseAPI>(`/filter/projects?name=${query.get('name') ? query.get('name')  : ''}&start_time=${query.get('startTime') ? query.get('startTime') : ''}&end_time=${query.get('endTime') ? query.get('endTime') : ''}&is_archived=${query.get('isArchived')}&soft_by=${query.get('softBy') ? query.get('softBy') : 0}&page=${params.page}&limit=${params.limit}`)
+    const res = await api.get<ResponseAPI>(`/filter/projects?name=${query.get('name') ? query.get('name') : ''}&start_time=${query.get('startTime') ? query.get('startTime') : ''}&end_time=${query.get('endTime') ? query.get('endTime') : ''}&is_archived=${query.get('isArchived')}&soft_by=${query.get('softBy') ? query.get('softBy') : 0}&page=${params.page}&limit=${params.limit}`)
     projects.value = res?.data?.data?.data
     loading.value = false
+  }
+
+  const fetchFilteredProjectsForAgile = async () => {
+    loading.value = true
+    const res = await api.get(`/projects/agile`)
+    let projects: ProjectAgile[] = []
+    const keySet = new Set(projects.map(project => project.id));
+    const missingProjects = ["project", "archive"]
+      .filter(id => !keySet.has(id))
+      .map(id => {
+        const project = new ProjectAgile();
+        project.id = id;
+        project.title = id.toUpperCase();
+        return project;
+      });
+    projects.push(...missingProjects)
+    for (let i = 0; i < res?.data?.data?.length; i++) {
+      let project: ProjectAgile = new ProjectAgile()
+      if (res?.data?.data[i].project.is_archived) {
+        const key = projects.find(p => p.id === "archive")
+        let item: any = {
+          id: res?.data?.data[i].project.id,
+          name: res?.data?.data[i].project.name,
+          description: res?.data?.data[i].project.description,
+          user: {
+            name: res?.data?.data[i].user.username
+          }
+        }
+        if (key) key.items.push(item)
+      } else {
+        const key = projects.find(p => p.id === "project")
+        let item: any = {
+          id: res?.data?.data[i].project.id,
+          name: res?.data?.data[i].project.name,
+          description: res?.data?.data[i].project.description,
+          user: {
+            name: res?.data?.data[i].user.username
+          }
+        }
+        if (key) key.items.push(item)
+      }
+    }
+    projectsAgile.value = projects
   }
 
   return {
     projects,
     currentProject,
     loading,
+    projectsAgile,
     fetchProjects,
     createProject,
     updateProject,
@@ -151,5 +207,6 @@ export const useProjectStore = defineStore('project', () => {
     setCurrentProject,
     fetchFilteredProjects,
     updateStepArchived,
+    fetchFilteredProjectsForAgile,
   }
 })
