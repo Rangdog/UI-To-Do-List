@@ -74,10 +74,11 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { authService } from '@/services/auth'
+import { useToast } from 'vue-toastification'
 
 const router = useRouter()
 const userStore = useUserStore()
-
+const toast = useToast()
 const form = ref({
   username: '',
   password: '',
@@ -89,9 +90,14 @@ const handleSubmit = async () => {
   try {
     loading.value = true
     const data = await authService.login(form.value)
-    userStore.setToken(data?.data?.token)
-    userStore.setUser(data?.data?.user)
-    router.push('/')
+    if (data.response_key==="SUCCESS"){
+      toast.success("Login success")
+      userStore.setToken(data?.data?.token)
+      userStore.setUser(data?.data?.user)
+      router.push('/')
+    }else{
+      toast.error(data.response_message)
+    }
   } catch (error) {
     console.error('Login failed:', error)
     // TODO: Show error message to user

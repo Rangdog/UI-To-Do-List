@@ -42,6 +42,18 @@
               placeholder="Password"
             />
           </div>
+          <div>
+            <label for="email" class="sr-only">Email</label>
+            <input
+              id="email"
+              v-model="form.email"
+              name="email"
+              type="text"
+              required
+              class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+              placeholder="email"
+            />
+          </div>
         </div>
 
         <div>
@@ -84,6 +96,10 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { authService } from '@/services/auth'
+import { useToast } from 'vue-toastification'
+
+const toast = useToast()
+
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -92,6 +108,7 @@ const form = ref({
   name: '',
   username: '',
   password: '',
+  email: ''
 })
 
 const loading = ref(false)
@@ -100,10 +117,14 @@ const handleSubmit = async () => {
   try {
     loading.value = true
     const data = await authService.register(form.value)
-    router.push('/')
-  } catch (error) {
+    if (data.response_key==="SUCCESS"){
+      toast.success("Sign in success")
+      router.push('/')
+    }else{
+      toast.error(data.response_message)
+    }
+  } catch (error :any) {
     console.error('Registration failed:', error)
-    // TODO: Show error message to user
   } finally {
     loading.value = false
   }

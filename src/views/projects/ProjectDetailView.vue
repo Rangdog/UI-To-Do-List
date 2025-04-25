@@ -169,7 +169,7 @@
                 class="flex-1 px-3 py-1 border rounded-md text-sm" />
               <button @click="addComment(step.id)"
                 class="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                Gửi
+                Send
               </button>
             </div>
           </div>

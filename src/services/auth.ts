@@ -46,9 +46,13 @@ interface AuthResponse {
 export const authService = {
   // Login and store token in cookie
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const response = await apiAuth.post<AuthResponse>('/login', credentials)
-    console.log(response.data);
-    return response.data
+    try{
+      const response = await apiAuth.post<AuthResponse>('/login', credentials)
+      console.log(response.data);
+      return response.data
+    }catch(error:any){
+      return error.response.data
+    }
   },
 
   // Logout and remove token
@@ -90,7 +94,11 @@ export const authService = {
   },
 
   async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await apiAuth.post<AuthResponse>('/register', data)
-    return response.data
+    try{
+      const response = await apiAuth.post<AuthResponse>('/register', data)
+      return response.data
+    }catch(error:any){
+      return error.response.data
+    }
   },
 }
