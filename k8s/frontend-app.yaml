@@ -14,10 +14,9 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: gcr.io/my-blog-454607/frontend-app:latest
+          image: gcr.io/my-blog-454607/frontend-app:nginx-latest  # Cập nhật với image mới
           ports:
-            - containerPort: 8080
-
+            - containerPort: 80  # Sử dụng port 80 của Nginx thay vì 8080
 ---
 apiVersion: v1
 kind: Service
@@ -29,4 +28,4 @@ spec:
     app: frontend-app
   ports:
     - port: 80
-      targetPort: 8080
+      targetPort: 80  # Chuyển sang port 80 của Nginx
