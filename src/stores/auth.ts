@@ -25,28 +25,27 @@ export const useAuthStore = defineStore('auth', {
     token: null,
     isAuthenticated: false
   }),
-  
+
   getters: {
     getUser: (state) => state.user,
     getToken: (state) => state.token,
     isLoggedIn: (state) => state.isAuthenticated
   },
-  
+
   actions: {
     async login(username: string, password: string) {
       try {
-        const data = await authService.login({username, password})
-        console.log(data)
+        const data = await authService.login({ username, password })
         this.token = data?.data?.token
         this.user = data?.data?.user
         this.isAuthenticated = true
-        
+
         return data?.data?.user
       } catch (error) {
         throw error
       }
     },
-    
+
     async logout() {
       try {
         await authService.logout()
@@ -56,11 +55,11 @@ export const useAuthStore = defineStore('auth', {
         this.reset()
       }
     },
-    
+
     async checkAuth() {
       try {
         const { token, user } = await authService.refreshToken()
-        
+
         if (token && user) {
           this.token = token
           this.user = user
@@ -72,7 +71,7 @@ export const useAuthStore = defineStore('auth', {
         this.reset()
       }
     },
-    
+
     reset() {
       this.user = null
       this.token = null

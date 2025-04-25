@@ -1,113 +1,88 @@
 <template>
   <!-- Filters Section -->
-<div class="flex flex-col sm:flex-row sm:items-end gap-4">
-  <!-- Name Filter -->
-  <div class="flex-1">
-    <label for="filter-name" class="block text-sm font-medium text-gray-700">Step Name</label>
-    <input
-      id="filter-name"
-      v-model="filters.name"
-      type="text"
-      placeholder="Search name..."
-      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-    />
+  <div class="flex flex-col sm:flex-row sm:items-end gap-4">
+    <!-- Name Filter -->
+    <div class="flex-1">
+      <label for="filter-name" class="block text-sm font-medium text-gray-700">Step Name</label>
+      <input id="filter-name" v-model="filters.name" type="text" placeholder="Search name..."
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+    </div>
+
+    <!-- Date Range -->
+    <div>
+      <label for="start-date" class="block text-sm font-medium text-gray-700">Start Time</label>
+      <input id="start-date" v-model="filters.startTime" type="date"
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+    </div>
+
+    <div>
+      <label for="end-date" class="block text-sm font-medium text-gray-700">End Time</label>
+      <input id="end-date" v-model="filters.endTime" type="date"
+        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+    </div>
+
+    <!-- Status Filter Combobox -->
+    <div class="mt-6">
+      <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+      <select id="status" v-model="filters.status"
+        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+        <option :value="null">All</option>
+        <option :value="1">Success</option>
+        <option :value="2">Pending</option>
+        <option :value="3">Processing</option>
+      </select>
+    </div>
+
+    <!-- SoftBy Filter Combobox -->
+    <div class="mt-6">
+      <label for="softBy" class="block text-sm font-medium text-gray-700">Soft by</label>
+      <select id="softBy" v-model="filters.softBy"
+        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+        <option :value="0">---</option>
+        <option :value="1">Name ASC</option>
+        <option :value="2">Name DESC</option>
+        <option :value="3">created ASC</option>
+        <option :value="4">created DESC</option>
+        <option :value="5">Updated ASC</option>
+        <option :value="6">Updated DESC</option>
+      </select>
+    </div>
+
+    <!-- IsArchived Checkbox -->
+    <div class="flex items-center mt-6">
+      <input id="archived" type="checkbox" v-model="filters.isArchived"
+        class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+      <label for="archived" class="ml-2 block text-sm text-gray-700">Archived</label>
+    </div>
+
+    <!-- Apply Filter Button -->
+    <div class="mt-6">
+      <button @click="applyFilters"
+        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+        Apply
+      </button>
+    </div>
   </div>
-
-  <!-- Date Range -->
-  <div>
-    <label for="start-date" class="block text-sm font-medium text-gray-700">Start Time</label>
-    <input
-      id="start-date"
-      v-model="filters.startTime"
-      type="date"
-      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-    />
-  </div>
-
-  <div>
-    <label for="end-date" class="block text-sm font-medium text-gray-700">End Time</label>
-    <input
-      id="end-date"
-      v-model="filters.endTime"
-      type="date"
-      class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-    />
-  </div>
-
-  <!-- Status Filter Combobox -->
-<div class="mt-6">
-  <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-  <select
-    id="status"
-    v-model="filters.status"
-    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-  >
-    <option :value="null">All</option>
-    <option :value="1">Success</option>
-    <option :value="2">Pending</option>
-    <option :value="3">Processing</option>
-  </select>
-</div>
-
- <!-- SoftBy Filter Combobox -->
- <div class="mt-6">
-  <label for="softBy" class="block text-sm font-medium text-gray-700">Soft by</label>
-  <select
-    id="softBy"
-    v-model="filters.softBy"
-    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-  >
-    <option :value="0">---</option>
-    <option :value="1">Name ASC</option>
-    <option :value="2">Name DESC</option>
-    <option :value="3">created ASC</option>
-    <option :value="4">created DESC</option>
-    <option :value="5">Updated ASC</option>
-    <option :value="6">Updated DESC</option>
-  </select>
-</div>
-
-<!-- IsArchived Checkbox -->
-<div class="flex items-center mt-6">
-    <input
-      id="archived"
-      type="checkbox"
-      v-model="filters.isArchived"
-      class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-    />
-    <label for="archived" class="ml-2 block text-sm text-gray-700">Archived</label>
-  </div>
-
-  <!-- Apply Filter Button -->
-  <div class="mt-6">
-    <button
-      @click="applyFilters"
-      class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-    >
-      Apply
-    </button>
-  </div>
-</div>
 
   <div class="space-y-6 mt-6">
     <!-- Project Header -->
     <div class="bg-white shadow rounded-lg p-6">
       <div class="flex justify-between items-start">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">{{ project?.name }}</h1>
-          <p class="mt-2 text-gray-500">{{ project?.description }}</p>
+          <h1 class="text-2xl font-bold text-gray-900">Project name: {{ project?.name }}</h1>
+          <p class="mt-2 text-gray-500">Description: {{ project?.description }}</p>
         </div>
         <div class="flex space-x-4">
-          <button
-            @click="showCreateStepModal = true"
-            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-          >
+          <router-link :to="`/manage/projects/${project?.id}`"
+            class="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-600 rounded-md hover:bg-indigo-50 inline-flex items-center justify-center">
+            Manage Permission
+          </router-link>
+          <button @click="showCreateStepModal = true"
+            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
             Add Step
           </button>
-          <button
-            @click="editProject"
-            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-          >
+          <button @click="editProject"
+            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
             Edit Project
           </button>
         </div>
@@ -116,11 +91,8 @@
 
     <!-- Steps List -->
     <div class="space-y-4">
-      <div
-        v-for="step in steps"
-        :key="step.id"
-        class="bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow"
-      >
+      <div v-for="step in steps" :key="step.id"
+        class="bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow">
         <div class="flex justify-between items-start">
           <div>
             <h2 class="text-lg font-medium text-gray-900">{{ step.name }}</h2>
@@ -130,8 +102,7 @@
             <button @click="editStep(step)" class="text-gray-400 hover:text-gray-500">
               <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
-                  d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
-                />
+                  d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
               </svg>
             </button>
             <!-- <button @click="deleteStep(step.id)" class="text-gray-400 hover:text-red-500">
@@ -147,72 +118,60 @@
         </div>
         <div class="mt-4 flex justify-between items-center">
           <div class="flex items-center space-x-2">
-            <span
-              :class="{
-                'bg-green-100 text-green-800': step.status_id === 1,
-                'bg-yellow-100 text-yellow-800': step.status_id === 2,
-                'bg-blue-100 text-blue-800': step.status_id === 3,
-              }"
-              class="px-2 py-1 text-xs font-medium rounded-full"
-            >
+            <span :class="{
+              'bg-green-100 text-green-800': step.status_id === 1,
+              'bg-yellow-100 text-yellow-800': step.status_id === 2,
+              'bg-blue-100 text-blue-800': step.status_id === 3,
+            }" class="px-2 py-1 text-xs font-medium rounded-full">
               {{ getStatusText(step.status_id) }}
             </span>
-            <span class="text-sm text-gray-500"> {{ step?.Amount}} tasks </span>
+            <span class="text-sm text-gray-500"> {{ step?.Amount }} tasks </span>
           </div>
-          <router-link
-            :to="`/steps/${step.id}`"
-            class="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-          >
+          <router-link :to="`/steps/${step.id}`" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">
             View Details →
           </router-link>
         </div>
-          <!-- COMMENT SECTION -->
+        <!-- COMMENT SECTION -->
         <div class="mt-4">
-          <button
-            @click="toggleComments(step.id)"
-            class="text-sm text-indigo-600 hover:underline mb-2"
-          >
+          <button @click="toggleComments(step.id)" class="text-sm text-indigo-600 hover:underline mb-2">
             {{ expandedSteps[step.id] ? 'Collapse' : 'Expand...' }}
           </button>
 
           <div v-if="expandedSteps[step.id]" class="space-y-2">
             <!-- Danh sách comment -->
-              <ul class="text-sm text-gray-700 space-y-1">
-                <li v-for="(comment, index) in stepComments[step.id]" :key="comment.id" class="bg-gray-50 p-2 rounded">
-                  <div v-if="editingCommentId !== comment.id">
-                    <p><strong>Account:</strong> {{ comment.user_id }}</p>
-                    <p><strong>Content:</strong> {{ comment.content }}</p>
-                    <div class="flex space-x-2 mt-1">
-                      <button @click="startEditing(comment)" class="text-sm text-indigo-600 hover:underline">Edit</button>
-                      <button @click="deleteComment(comment.id, step.id)" class="text-sm text-red-600 hover:underline">Delete</button>
-                    </div>
+            <ul class="text-sm text-gray-700 space-y-1">
+              <li v-for="(comment, index) in stepComments[step.id]" :key="comment.id" class="bg-gray-50 p-2 rounded">
+                <div v-if="editingCommentId !== comment.id">
+                  <p><strong>Account:</strong> {{ comment.user_id }}</p>
+                  <p><strong>Content:</strong> {{ comment.content }}</p>
+                  <div class="flex space-x-2 mt-1">
+                    <button @click="startEditing(comment)" class="text-sm text-indigo-600 hover:underline">Edit</button>
+                    <button @click="deleteComment(comment.id, step.id)"
+                      class="text-sm text-red-600 hover:underline">Delete</button>
                   </div>
+                </div>
 
-                  <div v-else class="space-y-1">
-                    <input v-model="editedContent" type="text" class="w-full px-2 py-1 border rounded-md text-sm" />
-                    <div class="flex space-x-2 mt-1">
-                      <button @click="saveCommentEdit(comment.id, step.id)" class="text-sm text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700">Save</button>
-                      <button @click="cancelEdit" class="text-sm text-gray-600 px-3 py-1 border rounded hover:bg-gray-200">Cancel</button>
-                    </div>
+                <div v-else class="space-y-1">
+                  <input v-model="editedContent" type="text" class="w-full px-2 py-1 border rounded-md text-sm" />
+                  <div class="flex space-x-2 mt-1">
+                    <button @click="saveCommentEdit(comment.id, step.id)"
+                      class="text-sm text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700">Save</button>
+                    <button @click="cancelEdit"
+                      class="text-sm text-gray-600 px-3 py-1 border rounded hover:bg-gray-200">Cancel</button>
                   </div>
-                </li>
-              </ul>
+                </div>
+              </li>
+            </ul>
 
-              <!-- Ô input và nút gửi -->
-              <div class="flex items-center space-x-2 mt-2">
-                <input
-                  v-model="newComment[step.id]"
-                  type="text"
-                  placeholder="Nhập bình luận..."
-                  class="flex-1 px-3 py-1 border rounded-md text-sm"
-                />
-                <button
-                  @click="addComment(step.id)"
-                  class="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                >
-                  Gửi
-                </button>
-              </div>
+            <!-- Ô input và nút gửi -->
+            <div class="flex items-center space-x-2 mt-2">
+              <input v-model="newComment[step.id]" type="text" placeholder="Nhập bình luận..."
+                class="flex-1 px-3 py-1 border rounded-md text-sm" />
+              <button @click="addComment(step.id)"
+                class="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                Gửi
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -221,33 +180,17 @@
 
     <!-- Empty State -->
     <div v-if="!loading && steps.length === 0" class="text-center py-12">
-      <svg
-        class="mx-auto h-12 w-12 text-gray-400"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-        />
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
       </svg>
       <h3 class="mt-2 text-sm font-medium text-gray-900">No steps</h3>
       <p class="mt-1 text-sm text-gray-500">Get started by creating a new step.</p>
       <div class="mt-6">
-        <button
-          @click="showCreateStepModal = true"
-          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
+        <button @click="showCreateStepModal = true"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
           <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-            />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
           New Step
         </button>
@@ -260,26 +203,18 @@
     </div>
 
     <div class="mt-6 flex justify-center space-x-2">
-      <button
-        @click="prevPage"
-        class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
-      >
+      <button @click="prevPage" class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300">
         Prev
       </button>
       <span>Page {{ currentPage }}</span>
-      <button
-        @click="nextPage"
-        class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
-      >
+      <button @click="nextPage" class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300">
         Next
       </button>
     </div>
-    
+
     <!-- Create/Edit Step Modal -->
-    <div
-      v-if="showCreateStepModal"
-      class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4"
-    >
+    <div v-if="showCreateStepModal"
+      class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
       <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
         <div class="px-4 py-5 sm:p-6">
           <h3 class="text-lg font-medium text-gray-900">
@@ -288,37 +223,23 @@
           <form @submit.prevent="handleSubmit" class="mt-4 space-y-4">
             <div>
               <label for="name" class="block text-sm font-medium text-gray-700"> Step Name </label>
-              <input
-                id="name"
-                v-model="form.name"
-                type="text"
-                required
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
+              <input id="name" v-model="form.name" type="text" required
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
             </div>
             <div>
               <label for="description" class="block text-sm font-medium text-gray-700">
                 Description
               </label>
-              <textarea
-                id="description"
-                v-model="form.description"
-                rows="3"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              ></textarea>
+              <textarea id="description" v-model="form.description" rows="3"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
             </div>
             <div class="flex justify-end space-x-3">
-              <button
-                type="button"
-                @click="showCreateStepModal = false"
-                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-              >
+              <button type="button" @click="showCreateStepModal = false"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
                 Cancel
               </button>
-              <button
-                type="submit"
-                class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
-              >
+              <button type="submit"
+                class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
                 {{ editingStep ? 'Update' : 'Create' }}
               </button>
             </div>
@@ -415,23 +336,23 @@ const nextPage = () => {
       limit: limit.value,
       project_id: project?.value?.id,
     }
-  )   
+  )
 }
 const prevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--
     stepStore.fetchFilteredSteps(
-    {
-      name: filters.value.name,
-      startTime: filters.value.startTime || undefined,
-      endTime: filters.value.endTime || undefined,
-      status: filters.value.status || 0,
-      isArchived: filters.value.isArchived,
-      softBy: filters.value.softBy,
-      page: currentPage.value,
-      limit: limit.value,
-      project_id: project?.value?.id,
-    }
+      {
+        name: filters.value.name,
+        startTime: filters.value.startTime || undefined,
+        endTime: filters.value.endTime || undefined,
+        status: filters.value.status || 0,
+        isArchived: filters.value.isArchived,
+        softBy: filters.value.softBy,
+        page: currentPage.value,
+        limit: limit.value,
+        project_id: project?.value?.id,
+      }
     )
   }
 }
@@ -478,7 +399,7 @@ const toggleComments = async (stepId: number) => {
 }
 
 // Thêm comment mới
-const addComment = async (stepId: number) => {  
+const addComment = async (stepId: number) => {
   if (!stepComments[stepId]) {
     stepComments[stepId] = []
   }
@@ -495,21 +416,20 @@ const addComment = async (stepId: number) => {
     }
   }
 }
-
+const projectId = Number(route.params.id)
 onMounted(async () => {
-  const projectId = Number(route.params.id)
   await projectStore.fetchProject(projectId)
   await stepStore.fetchFilteredSteps({
-      name: filters.value.name,
-      startTime: filters.value.startTime || undefined,
-      endTime: filters.value.endTime || undefined,
-      status: filters.value.status || 0,
-      isArchived: filters.value.isArchived,
-      softBy: filters.value.softBy,
-      page: currentPage.value,
-      limit: limit.value,
-      project_id: project?.value?.id,
-    })
+    name: filters.value.name,
+    startTime: filters.value.startTime || undefined,
+    endTime: filters.value.endTime || undefined,
+    status: filters.value.status || 0,
+    isArchived: filters.value.isArchived,
+    softBy: filters.value.softBy,
+    page: currentPage.value,
+    limit: limit.value,
+    project_id: project?.value?.id,
+  })
 })
 
 const getStatusText = (statusId: number) => {
@@ -529,9 +449,9 @@ const handleSubmit = async () => {
   try {
     if (editingStep.value) {
       const res = await stepStore.updateStep(editingStep.value.id, form.value)
-      if (res){
+      if (res) {
         toast.success('Updated step!')
-      }else{
+      } else {
         toast.error('Something went wrong!')
       }
     } else {
@@ -539,9 +459,9 @@ const handleSubmit = async () => {
         ...form.value,
         project_id: Number(route.params.id),
       })
-      if (res){
+      if (res) {
         toast.success('Created step!')
-      }else{
+      } else {
         toast.error('Something went wrong!')
       }
     }
@@ -562,15 +482,6 @@ const editStep = (step: Step) => {
   showCreateStepModal.value = true
 }
 
-const deleteStep = async (id: number) => {
-  if (confirm('Are you sure you want to delete this step?')) {
-    try {
-      await stepStore.deleteStep(id)
-    } catch (error) {
-      console.error('Failed to delete step:', error)
-    }
-  }
-}
 
 const editProject = () => {
   // TODO: Implement project editing
@@ -601,7 +512,7 @@ const saveCommentEdit = async (commentId: number, stepId: number) => {
     editingCommentId.value = null
     editedContent.value = ''
     toast.success("Edited comment!")
-  }else{
+  } else {
     toast.error("Some thing went wrong!")
   }
 }
@@ -622,7 +533,7 @@ const deleteComment = async (commentId: number, stepId: number) => {
         stepComments[stepId].splice(index, 1)
       }
       toast.success("Deleted comment!")
-    }else{
+    } else {
       toast.error("Something went wrong!")
     }
   }

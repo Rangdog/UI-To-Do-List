@@ -39,6 +39,26 @@ const routes: RouteRecordRaw[] = [
         name: 'TaskDetail',
         component: () => import('@/views/tasks/TaskDetailView.vue'),
       },
+      {
+        path: 'manage/projects/:id',
+        name: 'ManageProject',
+        component: () => import('@/views/manage/project.vue')
+      },
+      {
+        path: 'manage/steps/:id',
+        name: 'ManageStep',
+        component: () => import('@/views/manage/step.vue')
+      },
+      {
+        path: 'manage/tasks/:id',
+        name: 'ManageTask',
+        component: () => import('@/views/manage/task.vue')
+      },
+      {
+        path: '/agile_scrum_board',
+        name: 'AgileScrumBoard',
+        component: () => import('@/views/agile/board.vue')
+      }
     ],
   },
 ]

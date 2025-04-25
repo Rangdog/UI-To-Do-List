@@ -5,6 +5,7 @@ import pinia from './store'
 import Toast ,{POSITION} from "vue-toastification";
 import type { PluginOptions } from 'vue-toastification'
 import 'vue-toastification/dist/index.css'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
 import './assets/main.css'
 
@@ -24,6 +25,7 @@ const options: PluginOptions = {
     rtl: false
 };
 app.use(router)
+pinia.use(piniaPluginPersistedstate)
 app.use(pinia)
 app.use(Toast, options)
 app.mount('#app')
