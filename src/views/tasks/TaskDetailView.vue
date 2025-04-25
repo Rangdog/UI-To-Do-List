@@ -37,7 +37,7 @@
       <!-- Select Box -->
       <select v-model="selectedAssigner"
         class="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        <option value="">Select an Assigner</option>
+        <option :value = 0 >Select an Assigner</option>
         <option v-for="user in userStepRole" :key="user.user_id" :value="user.user_id">
           {{ user.username }}
         </option>
@@ -253,9 +253,6 @@ const getStatusText = (statusId?: number) => {
 }
 
 
-const editStep = () => {
-  // TODO: Implement step editing
-}
 
 //comment
 const editingCommentId = ref<number | null>(null)
@@ -332,6 +329,7 @@ const taskActions = computed(() => {
 });
 
 const setAssigner = async (userId: number) => {
+  console.log("userId",userId)
   const res = await taskStore.setAssigner(userId, taskId)
   if (res){
     toast.success("Assigned!")
