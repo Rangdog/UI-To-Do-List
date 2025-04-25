@@ -312,19 +312,19 @@ const taskActions = computed(() => {
       return [
         { label: "Mark as Archived", status: 4, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
         { label: "Mark as processing", status: 3, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
-        { label: "Mark as pending", status: 2, class: "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" },
+        { label: "Mark as pending", status: 2, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
       ];
     case 2:
       return [
         { label: "Mark as Archived", status: 4, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
         { label: "Mark as success", status: 1, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
-        { label: "Mark as processing", status: 3, class: "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" },
+        { label: "Mark as processing", status: 3, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
       ];
     case 3:
       return [
         { label: "Mark as Archived", status: 4, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
         { label: "Mark as success", status: 1, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
-        { label: "Mark as pending", status: 2, class: "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" },
+        { label: "Mark as pending", status: 2, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
       ];
     default:
       return [];

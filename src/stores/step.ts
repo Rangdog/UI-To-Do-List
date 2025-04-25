@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/utils/axios'
+import Step from '@/views/manage/step.vue'
 
 export interface Step {
   id: number
@@ -57,6 +58,7 @@ export class Agile {
 
 export const useStepStore = defineStore('step', () => {
   const steps = ref<Step[]>([])
+  const comments =ref<Comment[]>([])
   const stepsAgile = ref<Agile[]>([])
   const currentStep = ref<Step | null>(null)
   const loading = ref(false)
@@ -96,6 +98,19 @@ export const useStepStore = defineStore('step', () => {
       if (index !== -1) {
         steps.value[index].comments = response?.data?.data ?? []
       }
+    } catch (error) {
+      console.error('Failed to fetch step:', error)
+      throw error
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchCommentForStep = async (id: number) => {
+    try {
+      loading.value = true
+      const response = await api.get<ResponseAPI>(`/comments/step/${id}`)
+      comments.value = response?.data?.data ?? []
     } catch (error) {
       console.error('Failed to fetch step:', error)
       throw error
@@ -393,6 +408,7 @@ export const useStepStore = defineStore('step', () => {
     currentStep,
     loading,
     stepsAgile,
+    comments,
     fetchSteps,
     fetchStep,
     createStep,
@@ -409,6 +425,7 @@ export const useStepStore = defineStore('step', () => {
     fetchComment,
     fetchFilteredSteps,
     updateStepArchived,
-    fetchFilteredStepsForAgile
+    fetchFilteredStepsForAgile,
+    fetchCommentForStep
   }
 })

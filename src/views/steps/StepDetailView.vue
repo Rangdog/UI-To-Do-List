@@ -85,14 +85,17 @@
             class="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-600 rounded-md hover:bg-indigo-50 inline-flex items-center justify-center">
             Manage Permission
           </router-link>
+          <button @click="showCreateTaskModal = true"
+            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+            Add task
+          </button>
           <button v-for="action in stepAction" :key="action.label" @click="openConfirmDialog(action.status)"
             :class="action.class">
             {{ action.label }}
           </button>
         </div>
       </div>
-    </div>
-    <div class="mt-4 flex items-center space-x-2">
+      <div class="mt-4 flex items-center space-x-2">
       <span :class="{
         'bg-green-100 text-green-800': step?.status_id === 1,
         'bg-yellow-100 text-yellow-800': step?.status_id === 2,
@@ -101,10 +104,11 @@
         {{ getStatusText(step?.status_id) }}
       </span>
     </div>
+    </div>
   </div>
 
   <!-- Tasks List -->
-  <div class="space-y-4">
+  <div class="space-y-4 mt-4">
     <div v-for="task in taskStore.tasks" :key="task.id"
       class="bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow">
       <div class="flex justify-between items-start">
@@ -147,6 +151,48 @@
       </div>
     </div>
   </div>
+    <!-- Ô input và nút gửi -->
+    <div class="flex items-center space-x-2 mt-2">
+      <input v-model="newComment" type="text" placeholder="Comment..."
+        class="flex-1 px-3 py-1 border rounded-md text-sm" />
+      <button @click="addComment(step?.id || 1)"
+        class="px-2 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700">
+        Send
+      </button>
+    </div>
+
+    <!-- Danh sách comment -->
+    <ul class="text-sm text-gray-700 space-y-2 mt-2">
+      <li v-for="(comment, index) in comments" :key="index" class="bg-gray-50 p-2 rounded">
+        <!-- Hiển thị bình thường -->
+        <div v-if="editingCommentId !== comment.id">
+          <p><strong>Account:</strong> {{ comment?.user_id }}</p>
+          <p><strong>Content:</strong> {{ comment?.content }}</p>
+          <div class="flex space-x-3 mt-1">
+            <button @click="startEditing(comment)" class="text-sm text-indigo-600 hover:underline">
+              Edit
+            </button>
+            <button @click="deleteComment(comment.id)" class="text-sm text-red-600 hover:underline">
+              Delete
+            </button>
+          </div>
+        </div>
+
+        <!-- Chế độ chỉnh sửa -->
+        <div v-else class="space-y-1">
+          <input v-model="editedContent" type="text" class="w-full px-2 py-1 border rounded-md text-sm" />
+          <div class="flex space-x-2 mt-1">
+            <button @click="saveCommentEdit(comment.id)"
+              class="text-sm text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700">
+              Save
+            </button>
+            <button @click="cancelEdit" class="text-sm text-gray-600 px-3 py-1 border rounded hover:bg-gray-200">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </li>
+    </ul>
 
   <!-- Empty State -->
   <div v-if="!loading && taskStore.tasks.length === 0" class="text-center py-12">
@@ -261,11 +307,15 @@ const taskStore = useTaskStore()
 
 const step = computed(() => stepStore.currentStep)
 const loading = computed(() => stepStore.loading)
+const comments = computed(() => stepStore.comments)
 
 const showCreateTaskModal = ref(false)
 const editingTask = ref<Task | null>(null)
 const showConfirmDialog = ref(false)
 const confirmStatus = ref<number | null>(null)
+const editingCommentId = ref<number | null>(null)
+  const newComment = ref<string>("")
+  const editedContent = ref('')
 const form = ref({
   name: '',
   description: '',
@@ -300,6 +350,62 @@ const applyFilters = async () => {
   }
 }
 
+const startEditing = (comment: any) => {
+  editingCommentId.value = comment.id
+  editedContent.value = comment.content
+}
+
+const cancelEdit = () => {
+  editingCommentId.value = null
+  editedContent.value = ''
+}
+
+const saveCommentEdit = async (commentId: number) => {
+  if (!editedContent.value.trim()) return
+
+  const res = await stepStore.updateComment(commentId, 
+    editedContent.value.trim()
+  )
+  if(res){
+    await stepStore.fetchCommentForStep(step.value?.id||-1)
+    editingCommentId.value = null
+    editedContent.value = ''
+    toast.success("Edited comment!")
+  }else{
+    toast.error("Some thing went wrong!")
+  }
+
+}
+const addComment = async (id: number) => {
+  const comment = newComment.value?.trim()
+  const res = await stepStore.createComment(id, comment)
+  if (res) {
+      await stepStore.fetchCommentForStep(step.value?.id||-1)
+      newComment.value = ''
+      toast.success("Added comment!")
+    } else {
+      toast.warning("Something went wrong!")
+      console.warn('Có gì đó sai sai 🤔')
+    }
+}
+
+const deleteComment = async (commentId: number) => {
+  if (confirm('Are you want delete this comment?')) {
+    try {
+      const res = await stepStore.deleteComment(commentId)
+      if (res) {
+        await stepStore.fetchCommentForStep(step.value?.id||-1)
+        toast.success('Deleted comment!')
+      }
+      else {
+        toast.error('Something went wrong!')
+      }
+    } catch (error) {
+      console.error('Xoá bình luận thất bại:', error)
+      toast.error('Something went wrong!')
+    }
+  }
+}
 
 watch(filters, () => {
   currentPage.value = 1
@@ -411,6 +517,7 @@ onMounted(async () => {
       limit: limit.value,
       step_id: step?.value?.id,
     })
+  await stepStore.fetchCommentForStep(stepId)
 })
 
 const getStatusText = (statusId?: number) => {
@@ -485,19 +592,19 @@ const stepAction = computed(() => {
       return [
         { label: "Mark as Archived", status: 4, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
         { label: "Mark as processing", status: 3, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
-        { label: "Mark as pending", status: 2, class: "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" },
+        { label: "Mark as pending", status: 2, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
       ];
     case 2:
       return [
         { label: "Mark as Archived", status: 4, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
         { label: "Mark as success", status: 1, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
-        { label: "Mark as processing", status: 3, class: "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" },
+        { label: "Mark as processing", status: 3, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
       ];
     case 3:
       return [
         { label: "Mark as Archived", status: 4, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
         { label: "Mark as success", status: 1, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
-        { label: "Mark as pending", status: 2, class: "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50" },
+        { label: "Mark as pending", status: 2, class: "px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700" },
       ];
     default:
       return [];
