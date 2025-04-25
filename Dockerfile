@@ -25,4 +25,6 @@ WORKDIR /app
 COPY --from=build /app/dist ./dist
 
 EXPOSE 8080
-CMD ["http-server", "dist", "-p", "8080", "-a", "0.0.0.0"]
+
+# Chạy http-server trong chế độ SPA với flag -s
+CMD ["http-server", "dist", "-p", "8080", "-a", "0.0.0.0", "-s"]
