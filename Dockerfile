@@ -1,30 +1,31 @@
-# Sử dụng Alpine Node image nhẹ
+# ============================
+# Stage Build (công đoạn build ứng dụng Vue)
+# ============================
 FROM node:lts-alpine AS build
 
 WORKDIR /app
 
-# Cài dependency
+# Cài đặt các dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy source code và build
+# Sao chép mã nguồn và thực hiện build
 COPY . .
 RUN npm run build
 
 # ============================
-# Stage phục vụ static files
+# Stage Nginx để phục vụ static files
 # ============================
-FROM node:lts-alpine
+FROM nginx:alpine
 
-# Cài http-server
-RUN npm install -g http-server
+# Cấu hình Nginx
+COPY nginx.conf /etc/nginx/nginx.conf
 
-WORKDIR /app
+# Chỉ sao chép thư mục build (dist) vào Nginx
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Chỉ copy thư mục build ra (sạch hơn)
-COPY --from=build /app/dist ./dist
+# Expose port 80 (port mặc định của Nginx)
+EXPOSE 80
 
-EXPOSE 8080
-
-# Chạy http-server trong chế độ SPA với flag -s
-CMD ["http-server", "dist", "-p", "8080", "-a", "0.0.0.0", "-s"]
+# Chạy Nginx
+CMD ["nginx", "-g", "daemon off;"]
