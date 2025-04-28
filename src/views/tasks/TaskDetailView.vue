@@ -4,7 +4,11 @@
     <div class="bg-white shadow rounded-lg p-6">
       <div class="flex flex-col space-y-4">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Task name: {{ task?.name }}</h1>
+          <h1 class="text-2xl font-bold text-gray-900">Task name: {{ task?.name }}
+            <button @click="toggleNotification" class="ml-2">
+              <component :is="notification ? BellIcon : BellSlashIcon" class="h-6 w-6" />
+            </button>
+          </h1>
           <p class="mt-2 text-gray-500">Description: {{ task?.description }}</p>
         </div>
 
@@ -151,6 +155,7 @@ import { useRoute } from 'vue-router'
 import { useTaskStore } from '@/stores/task'
 import { useToast } from 'vue-toastification'
 import { useUserRoleStore } from '@/stores/userRole'
+import { BellIcon, BellSlashIcon } from '@heroicons/vue/24/outline'
 
 const toast = useToast()
 
@@ -161,6 +166,7 @@ const userRoleStore = useUserRoleStore()
 const task = computed(() => taskStore.currentTask)
 const loading = computed(() => taskStore.loading)
 const userStepRole = computed(() => userRoleStore.userStepRole)
+const notification = computed(() => taskStore.notification)
 
 const showConfirmDialog = ref(false)
 const confirmStatus = ref<number | null>(null)
@@ -171,6 +177,15 @@ const form = ref({
 })
 const selectedAssigner = ref()
 const selectedPriority = ref(0)
+const toggleNotification = async() => {
+    const res = await taskStore.ToggleNotification(taskId,!notification.value)
+    if (res){
+      toast.success("Notification Changed!")
+      await taskStore.fetchTask(taskId)
+    }else{
+      toast.error("Something went wrong!")
+    }
+};
 watchEffect(() => {
   if (task.value?.priority !== undefined) {
     selectedPriority.value = task.value?.priority

@@ -48,6 +48,7 @@ export const useTaskStore = defineStore('task', () => {
   const currentTask = ref<Task | null>(null)
   const comment = ref<Comment[]>([])
   const loading = ref(false)
+  const notification = ref(false)
 
   // Step methods
   const fetchTasks = async (step_id: number) => {
@@ -67,7 +68,8 @@ export const useTaskStore = defineStore('task', () => {
     try {
       loading.value = true
       const response = await api.get<ResponseAPI>(`/tasks/${id}`)
-      currentTask.value = response?.data?.data
+      currentTask.value = response?.data?.data?.task
+      notification.value = response?.data?.data?.notification
     } catch (error) {
       console.error('Failed to fetch step:', error)
       throw error
@@ -326,6 +328,22 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
+      const ToggleNotification = async (taskId: number, notificationUpdate :boolean) => {
+        try {
+          loading.value = true
+          const res = await api.patch(`/notification`, {
+            task_id: taskId,
+            notifications_enabled:notificationUpdate
+          })
+          return res.status === 200
+        }
+        catch (error) {
+          console.error('Failed to delete project:', error)
+          return false
+        } finally {
+          loading.value = false
+        }
+      }
 
   return {
     tasks,
@@ -333,6 +351,7 @@ export const useTaskStore = defineStore('task', () => {
     comment,
     loading,
     tasksAgile,
+    notification,
     fetchTasks,
     fetchTask,
     createTask,
@@ -347,5 +366,6 @@ export const useTaskStore = defineStore('task', () => {
     fetchFilteredTasksForAgile,
     setAssigner,
     setPriority,
+    ToggleNotification,
   }
 })

@@ -72,7 +72,11 @@
     <div class="bg-white shadow rounded-lg p-6">
       <div class="flex flex-col space-y-4">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Step name: {{ step?.name }}</h1>
+          <h1 class="text-2xl font-bold text-gray-900">Step name: {{ step?.name }}
+            <button @click="toggleNotification" class="ml-2">
+              <component :is="notification ? BellIcon : BellSlashIcon" class="h-6 w-6" />
+            </button>
+          </h1>
           <p class="mt-2 text-gray-500">Description: {{ step?.description }}</p>
         </div>
 
@@ -298,6 +302,7 @@ import { useStepStore } from '@/stores/step'
 import { useTaskStore } from '@/stores/task'
 import type { Task } from '@/stores/step'
 import { useToast } from 'vue-toastification'
+import { BellIcon, BellSlashIcon } from '@heroicons/vue/24/outline'
 
 const toast = useToast()
 
@@ -308,6 +313,7 @@ const taskStore = useTaskStore()
 const step = computed(() => stepStore.currentStep)
 const loading = computed(() => stepStore.loading)
 const comments = computed(() => stepStore.comments)
+const notification = computed(() => stepStore.notification)
 
 const showCreateTaskModal = ref(false)
 const editingTask = ref<Task | null>(null)
@@ -331,6 +337,15 @@ const filters = ref({
   isArchived: false,
   softBy: 0,
 })
+const toggleNotification = async() => {
+    const res = await stepStore.ToggleNotification(stepId,!notification.value)
+    if (res){
+      toast.success("Notification Changed!")
+      await stepStore.fetchStep(stepId)
+    }else{
+      toast.error("Something went wrong!")
+    }
+};
 
 const applyFilters = async () => {
   try {
@@ -501,9 +516,8 @@ const confirmChangeArchived = async () => {
   }
 }
 
-
+const stepId = Number(route.params.id)
 onMounted(async () => {
-  const stepId = Number(route.params.id)
   await stepStore.fetchStep(stepId)
   await taskStore.fetchFilteredTasks(
     {
