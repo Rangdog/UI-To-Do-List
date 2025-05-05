@@ -170,7 +170,7 @@
       <li v-for="(comment, index) in comments" :key="index" class="bg-gray-50 p-2 rounded">
         <!-- Hiển thị bình thường -->
         <div v-if="editingCommentId !== comment.id">
-          <p><strong>Account:</strong> {{ comment?.user_id }}</p>
+          <p><strong>Account:</strong> {{ comment?.User.name }}</p>
           <p><strong>Content:</strong> {{ comment?.content }}</p>
           <div class="flex space-x-3 mt-1">
             <button @click="startEditing(comment)" class="text-sm text-indigo-600 hover:underline">

@@ -85,10 +85,6 @@
             class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
             Add Step
           </button>
-          <button @click="editProject"
-            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
-            Edit Project
-          </button>
         </div>
       </div>
     </div>
@@ -304,7 +300,7 @@ const applyFilters = async () => {
       softBy: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
-      project_id: project?.value?.id,
+      project_id: projectId,
     })
   } catch (error) {
     console.error('Error while applying filters:', error)
@@ -324,7 +320,7 @@ watch(filters, () => {
       softBy: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
-      project_id: project?.value?.id,
+      project_id: projectId,
     }
   )
 }, { deep: true })
@@ -341,7 +337,7 @@ const nextPage = () => {
       softBy: filters.value.softBy,
       page: currentPage.value,
       limit: limit.value,
-      project_id: project?.value?.id,
+      project_id: projectId,
     }
   )
 }
@@ -358,7 +354,7 @@ const prevPage = () => {
         softBy: filters.value.softBy,
         page: currentPage.value,
         limit: limit.value,
-        project_id: project?.value?.id,
+        project_id: projectId,
       }
     )
   }
@@ -434,7 +430,7 @@ onMounted(async () => {
     softBy: filters.value.softBy,
     page: currentPage.value,
     limit: limit.value,
-    project_id: project?.value?.id,
+    project_id: projectId,
   })
 })
 
@@ -463,7 +459,7 @@ const handleSubmit = async () => {
     } else {
       const res = await stepStore.createStep({
         ...form.value,
-        project_id: Number(route.params.id),
+        project_id: projectId,
       })
       if (res.status) {
         toast.success('Created step!')
