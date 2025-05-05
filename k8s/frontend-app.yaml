@@ -17,6 +17,14 @@ spec:
           image: gcr.io/my-blog-454607/frontend-app:latest  # Cập nhật với image mới
           ports:
             - containerPort: 80  # Sử dụng port 80 của Nginx thay vì 8080
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf  # Mount tệp nginx.conf từ ConfigMap vào /etc/nginx/nginx.conf
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: nginx-conf  # Tên của ConfigMap mà bạn đã tạo trước đó
 ---
 apiVersion: v1
 kind: Service

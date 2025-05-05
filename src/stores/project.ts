@@ -33,6 +33,7 @@ export const useProjectStore = defineStore('project', () => {
   const projects = ref<Project[]>([])
   const projectsAgile = ref<ProjectAgile[]>([])
   const currentProject = ref<Project | null>(null)
+  const notification = ref(false)
   const loading = ref(false)
 
   const fetchProjects = async () => {
@@ -116,7 +117,9 @@ export const useProjectStore = defineStore('project', () => {
     try {
       loading.value = true
       const res = await api.get(`/projects/${id}`)
-      currentProject.value = res.data.data
+      console.log(res)
+      currentProject.value = res.data.data.project
+      notification.value = res.data.data.notification
     }
     catch (error) {
       console.error('Failed to delete project:', error)
@@ -194,11 +197,29 @@ export const useProjectStore = defineStore('project', () => {
     projectsAgile.value = projects
   }
 
+  const ToggleNotification = async (projectId: number, notificationUpdate :boolean) => {
+    try {
+      loading.value = true
+      const res = await api.patch(`/notification`, {
+        project_id: projectId,
+        notifications_enabled:notificationUpdate
+      })
+      return res.status === 200
+    }
+    catch (error) {
+      console.error('Failed to delete project:', error)
+      return false
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     projects,
     currentProject,
     loading,
     projectsAgile,
+    notification,
     fetchProjects,
     createProject,
     updateProject,
@@ -208,5 +229,6 @@ export const useProjectStore = defineStore('project', () => {
     fetchFilteredProjects,
     updateStepArchived,
     fetchFilteredProjectsForAgile,
+    ToggleNotification,
   }
 })

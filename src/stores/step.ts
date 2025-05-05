@@ -62,6 +62,7 @@ export const useStepStore = defineStore('step', () => {
   const stepsAgile = ref<Agile[]>([])
   const currentStep = ref<Step | null>(null)
   const loading = ref(false)
+  const notification = ref(false)
 
   // Step methods
   const fetchSteps = async (projectId: number) => {
@@ -81,7 +82,9 @@ export const useStepStore = defineStore('step', () => {
     try {
       loading.value = true
       const response = await api.get<ResponseAPI>(`/steps/${id}`)
-      currentStep.value = response?.data?.data
+      console.log(response)
+      currentStep.value = response?.data?.data?.step
+      notification.value = response?.data?.data?.notification
     } catch (error) {
       console.error('Failed to fetch step:', error)
       throw error
@@ -403,12 +406,31 @@ export const useStepStore = defineStore('step', () => {
     stepsAgile.value = steps
   }
 
+
+    const ToggleNotification = async (stepId: number, notificationUpdate :boolean) => {
+      try {
+        loading.value = true
+        const res = await api.patch(`/notification`, {
+          step_id: stepId,
+          notifications_enabled:notificationUpdate
+        })
+        return res.status === 200
+      }
+      catch (error) {
+        console.error('Failed to delete project:', error)
+        return false
+      } finally {
+        loading.value = false
+      }
+    }
+
   return {
     steps,
     currentStep,
     loading,
     stepsAgile,
     comments,
+    notification,
     fetchSteps,
     fetchStep,
     createStep,
@@ -426,6 +448,7 @@ export const useStepStore = defineStore('step', () => {
     fetchFilteredSteps,
     updateStepArchived,
     fetchFilteredStepsForAgile,
-    fetchCommentForStep
+    fetchCommentForStep,
+    ToggleNotification
   }
 })

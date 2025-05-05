@@ -4,7 +4,7 @@ import api from '@/utils/axios'
 import type { User } from '@/types/user'
 
 // Constants
-const API_URL = 'http://35.185.181.50/api' // Update with your actual API URL
+const API_URL = 'http://35.185.181.50/api' // http://35.185.181.50
 const TOKEN_COOKIE = 'auth_token'
 const TOKEN_EXPIRY = 7 // days
 

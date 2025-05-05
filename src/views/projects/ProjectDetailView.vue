@@ -69,7 +69,11 @@
     <div class="bg-white shadow rounded-lg p-6">
       <div class="flex justify-between items-start">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Project name: {{ project?.name }}</h1>
+          <h1 class="text-2xl font-bold text-gray-900">Project name: {{ project?.name }} 
+            <button @click="toggleNotification" class="ml-2">
+              <component :is="notification ? BellIcon : BellSlashIcon" class="h-6 w-6" />
+            </button>
+          </h1>
           <p class="mt-2 text-gray-500">Description: {{ project?.description }}</p>
         </div>
         <div class="flex space-x-4">
@@ -257,6 +261,7 @@ import { useProjectStore } from '@/stores/project'
 import { useStepStore } from '@/stores/step'
 import type { Step } from '@/stores/step'
 import { useToast } from 'vue-toastification'
+import { BellIcon, BellSlashIcon } from '@heroicons/vue/24/outline'
 
 const toast = useToast()
 const route = useRoute()
@@ -266,6 +271,7 @@ const stepStore = useStepStore()
 const project = computed(() => projectStore.currentProject)
 const steps = computed(() => stepStore.steps)
 const loading = computed(() => stepStore.loading)
+const notification = computed(() => projectStore.notification)
 
 const showCreateStepModal = ref(false)
 const editingStep = ref<Step | null>(null)
@@ -285,6 +291,16 @@ const filters = ref({
   isArchived: false,
   softBy: 0,
 })
+
+const toggleNotification = async() => {
+    const res = await projectStore.ToggleNotification(projectId,!notification.value)
+    if (res){
+      toast.success("Notification Changed!")
+      await projectStore.fetchProject(projectId)
+    }else{
+      toast.error("Something went wrong!")
+    }
+};
 
 const applyFilters = async () => {
   try {
