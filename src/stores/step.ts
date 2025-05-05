@@ -37,6 +37,7 @@ export interface Comment {
   user_id: number
   step_id?: number
   task_id?: number
+  User?: any
 }
 
 interface ResponseAPI {
@@ -82,7 +83,6 @@ export const useStepStore = defineStore('step', () => {
     try {
       loading.value = true
       const response = await api.get<ResponseAPI>(`/steps/${id}`)
-      console.log(response)
       currentStep.value = response?.data?.data?.step
       notification.value = response?.data?.data?.notification
     } catch (error) {

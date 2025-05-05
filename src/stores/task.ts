@@ -23,6 +23,7 @@ export interface Comment {
   user_id: number
   step_id?: number
   task_id?: number
+  User?: any
 }
 
 export class Agile {

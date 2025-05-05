@@ -32,21 +32,22 @@
         <p>INVITE</p>
         <div v-for="user in userInvitedPending" :key="user.id" class="shadow-sm">
           <div class="">
-            <div v-if="user.Status == 'Pending'" class="mt-4 p-4 bg-yellow-100 border rounded-xl">
+            <div v-if="user.Status == 'Pending'" class="mt-4 p-4 bg-yellow-100 border rounded-xl min-h-30 min-w-60">
               <div>
                 <p class="text-sm text-gray-500">Email: {{ user.Email }}</p>
                 <p class="text-sm text-gray-500">Invite time: {{ formatDate(user.CreatedAt) }}</p>
                 <p class="text-sm text-gray-500">Status: {{ user.Status }}</p>
               </div>
             </div>
-            <div v-else-if="user.Status == 'Accepted'" class="mt-4 p-4 bg-green-100 border rounded-xl">
+            <div v-else-if="user.Status == 'Accepted'"
+              class="mt-4 p-4 bg-green-100 border rounded-xl min-h-30 min-w-60">
               <div>
                 <p class="text-sm text-gray-500">Email: {{ user.Email }}</p>
                 <p class="text-sm text-gray-500">Invite time: {{ formatDate(user.CreatedAt) }}</p>
                 <p class="text-sm text-gray-500">Status: {{ user.Status }}</p>
               </div>
             </div>
-            <div v-else class="mt-4 p-4 bg-red-100 border rounded-xl">
+            <div v-else class="mt-4 p-4 bg-red-100 border rounded-xl min-h-30 min-w-60">
               <div>
                 <p class="text-sm text-gray-500">Email: {{ user.Email }}</p>
                 <p class="text-sm text-gray-500">Invite time: {{ formatDate(user.CreatedAt) }}</p>
@@ -58,8 +59,11 @@
       </div>
 
       <!-- Cột bên phải -->
-      <div class="w-2/3 grid gap-4">
-        <div v-for="user in users" :key="user.id" class="p-4 border rounded-xl shadow-sm">
+      <div class="w-2/3 gap-4">
+        <div v-for="(user, index) in users" :key="user.id" :class="[
+          'p-4 border rounded-xl shadow-sm h-30',
+          index > 0 ? 'mt-4' : ''
+        ]">
           <div class="flex items-center justify-between gap-4 p-4 bg-white rounded-lg shadow">
             <!-- User Info -->
             <div class="flex flex-col">
@@ -129,9 +133,9 @@ const updateUserRole = async (user: any) => {
   const selectedRole = roles.value.find(r => r.id === user.role_id);
   const roleTitle = selectedRole ? selectedRole.title : null;
   const res = await userRoleStore.updateUserRole({ userId: user.User.id, projectId: projectId, Slug: roleTitle || "" })
-  if (res?.status){
+  if (res?.status) {
     toast.success("Updated Role")
-  }else{
+  } else {
     toast.error(res?.msg + "!")
   }
   await userRoleStore.fetchUsersRole(projectId)
