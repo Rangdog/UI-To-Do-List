@@ -179,11 +179,11 @@ const selectedAssigner = ref()
 const selectedPriority = ref(0)
 const toggleNotification = async() => {
     const res = await taskStore.ToggleNotification(taskId,!notification.value)
-    if (res){
+    if (res.status){
       toast.success("Notification Changed!")
       await taskStore.fetchTask(taskId)
     }else{
-      toast.error("Something went wrong!")
+      toast.error(res.msg + "!")
     }
 };
 watchEffect(() => {
@@ -206,11 +206,11 @@ const confirmChangeStatus = async () => {
 
   try {
     const res = await taskStore.updateTaskStatus(task.value.id, confirmStatus.value)
-    if (res) {
+    if (res.status) {
       await taskStore.fetchTask(task.value.id)
       toast.success('Changed status!') // Refresh lại task
     } else {
-      toast.error('Something went wrong')
+      toast.error(res.msg + "!")
     }
   } catch (err) {
     console.error('Failed to update task status:', err)
@@ -225,11 +225,11 @@ const confirmChangeArchived = async () => {
 
   try {
     const res = await taskStore.updateTaskArchived(task.value.id, confirmStatus.value)
-    if (res) {
+    if (res.status) {
       await taskStore.fetchTask(task.value.id)
       toast.success('Mark as archived!') // Refresh lại task
     } else {
-      toast.error('Something went wrong')
+      toast.error(res.msg + "!")
     }
   } catch (err) {
     console.error('Failed to update task status:', err)
@@ -242,8 +242,13 @@ const confirmChangeArchived = async () => {
 
 const addComment = async (id: number) => {
   const comment = newComment.value?.trim()
-  await taskStore.createComment(id, comment)
-  newComment.value = ''
+  const res = await taskStore.createComment(id, comment)
+  if (res.status){
+    newComment.value = ''
+    toast.success("Created Comment")
+  }else{
+    toast.error(res.msg + "!")
+  }
 }
 const taskId = Number(route.params.id)
 onMounted(async () => {
@@ -290,13 +295,13 @@ const saveCommentEdit = async (commentId: number) => {
     content: editedContent.value.trim(),
   })
 
-  if (res) {
+  if (res.status) {
     await taskStore.fetchComment(task?.value?.id || 0) // hoặc fetch lại nếu cần
     cancelEdit()
     toast.success('Updated comment!')
   } else {
     console.warn('Cập nhật thất bại 😢')
-    toast.error('Something went wrong!')
+    toast.error(res.msg + "!")
   }
 }
 
@@ -304,12 +309,13 @@ const deleteComment = async (commentId: number) => {
   if (confirm('Are you want delete this comment?')) {
     try {
       const res = await taskStore.deleteComment(commentId)
-      if (res) {
+      
+      if (res.status) {
         await taskStore.fetchComment(task?.value?.id || 0)
         toast.success('Deleted comment!')
       }
       else {
-        toast.error('Something went wrong!')
+        toast.error(res.msg + "!")
       }
     } catch (error) {
       console.error('Xoá bình luận thất bại:', error)
@@ -346,19 +352,19 @@ const taskActions = computed(() => {
 const setAssigner = async (userId: number) => {
   console.log("userId",userId)
   const res = await taskStore.setAssigner(userId, taskId)
-  if (res){
+  if (res.status){
     toast.success("Assigned!")
   }else{
-    toast.error("Something went wrong!")
+    toast.error(res.msg + "!")
   }
 }
 
 const setPriority = async (priority: number) => {
   const res = await taskStore.setPriority(priority, taskId)
-  if (res){
+  if (res.status){
     toast.success("Success!")
   }else{
-    toast.error("something went wrong!")
+    toast.error(res.msg + "!")
   }
 }
 </script>

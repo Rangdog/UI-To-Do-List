@@ -56,10 +56,14 @@ export const useProjectStore = defineStore('project', () => {
       loading.value = true
       const response = await api.post<ResponseAPI>('/projects', project)
       projects.value.push(response?.data?.data)
-      return response.status === 201
-    } catch (error) {
+      if (response.status === 201){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error: any) {
       console.error('Failed to create project:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -73,10 +77,14 @@ export const useProjectStore = defineStore('project', () => {
       if (index !== -1) {
         projects.value[index] = response?.data?.data
       }
-      return response.status === 200
-    } catch (error) {
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error:any) {
       console.error('Failed to update project:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -90,23 +98,14 @@ export const useProjectStore = defineStore('project', () => {
       if (index !== -1) {
         projects.value[index] = response?.data?.data
       }
-      return response.status === 200
-    } catch (error) {
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error: any) {
       console.error('Failed to update step status:', error)
-      return false
-    } finally {
-      loading.value = false
-    }
-  }
-
-  const deleteProject = async (id: number) => {
-    try {
-      loading.value = true
-      await api.delete(`/projects/${id}`)
-      projects.value = projects.value.filter((p) => p.id !== id)
-    } catch (error) {
-      console.error('Failed to delete project:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -204,11 +203,15 @@ export const useProjectStore = defineStore('project', () => {
         project_id: projectId,
         notifications_enabled:notificationUpdate
       })
-      return res.status === 200
+      if (res.status === 200){
+        return {status:true, msg:res?.data.response_message}
+      }else{
+        return {status:true, msg:res?.data.response_message}
+      }
     }
-    catch (error) {
+    catch (error:any) {
       console.error('Failed to delete project:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -223,7 +226,6 @@ export const useProjectStore = defineStore('project', () => {
     fetchProjects,
     createProject,
     updateProject,
-    deleteProject,
     fetchProject,
     setCurrentProject,
     fetchFilteredProjects,

@@ -97,10 +97,14 @@ export const useTaskStore = defineStore('task', () => {
       loading.value = true
       const response = await api.post<ResponseAPI>('/tasks', task)
       tasks.value.push(response?.data?.data)
-      return response.status === 201
-    } catch (error) {
+      if (response.status === 201){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error:any) {
       console.error('Failed to create task:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -117,10 +121,14 @@ export const useTaskStore = defineStore('task', () => {
       if (currentTask.value?.id === id) {
         currentTask.value = response?.data.data
       }
-      return response.status === 200
-    } catch (error) {
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error:any) {
       console.error('Failed to update task:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -132,10 +140,14 @@ export const useTaskStore = defineStore('task', () => {
       const response = await api.patch<ResponseAPI>(`/tasks/status/${id}`, { state: state })
       const index = tasks.value.findIndex((t) => t.id === id)
       tasks.value[index] = response?.data?.data
-      return response.status === 200
-    } catch (error) {
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error:any) {
       console.error('Failed to update task status:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -147,10 +159,14 @@ export const useTaskStore = defineStore('task', () => {
       const response = await api.patch<ResponseAPI>(`/tasks/archived/${id}`, { state: state })
       const index = tasks.value.findIndex((t) => t.id === id)
       tasks.value[index] = response?.data?.data
-      return response.status === 200
-    } catch (error) {
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error:any) {
       console.error('Failed to update task status:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -161,9 +177,14 @@ export const useTaskStore = defineStore('task', () => {
       loading.value = true
       const response = await api.post<ResponseAPI>(`/comments/task/${id}`, { content: content })
       comment.value.push(response?.data?.data)
-    } catch (error) {
+      if (response.status === 201){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error:any) {
       console.error('Failed to fetch step:', error)
-      throw error
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -202,10 +223,14 @@ export const useTaskStore = defineStore('task', () => {
       const response = await api.patch<ResponseAPI>(`/comments/${commentId}`, { content: params.content })
       const index = comment.value.findIndex((c) => c.id == commentId)
       comment.value[index] = response?.data?.data
-      return response.status === 200
-    } catch (error) {
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error:any) {
       console.error('Failed to fetch step:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -219,10 +244,13 @@ export const useTaskStore = defineStore('task', () => {
       if (index !== -1) {
         comment.value.splice(index, 1)
       }
-      return response.status === 200
-    } catch (error) {
-      console.error('Failed to fetch step:', error)
-      return false
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error:any) {
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -306,10 +334,14 @@ export const useTaskStore = defineStore('task', () => {
     try {
       loading.value = true
       const response = await api.patch<ResponseAPI>(`/tasks/assigner/${taskId}`, { user_id: userId })
-      return response.status === 200
-    } catch (error) {
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error:any) {
       console.error('Failed to fetch step:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -319,10 +351,14 @@ export const useTaskStore = defineStore('task', () => {
     try {
       loading.value = true
       const response = await api.patch<ResponseAPI>(`/tasks/priority/${taskId}`, { priority: priority })
-      return response.status === 200
-    } catch (error) {
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error:any) {
       console.error('Failed to fetch step:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -335,11 +371,15 @@ export const useTaskStore = defineStore('task', () => {
             task_id: taskId,
             notifications_enabled:notificationUpdate
           })
-          return res.status === 200
+          if (res.status === 200){
+            return {status:true, msg:res?.data.response_message}
+          }else{
+            return {status:true, msg:res?.data.response_message}
+          }
         }
-        catch (error) {
+        catch (error:any) {
           console.error('Failed to delete project:', error)
-          return false
+          return {status:false, msg:error?.response?.data.response_message}
         } finally {
           loading.value = false
         }

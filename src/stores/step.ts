@@ -125,15 +125,19 @@ export const useStepStore = defineStore('step', () => {
   const createComment = async (id: number, content: string) => {
     try {
       loading.value = true
-      const response = await api.post<ResponseAPI>(`/comments/step/${id}`, { content: content })
+      const res = await api.post<ResponseAPI>(`/comments/step/${id}`, { content: content })
       const index = steps.value.findIndex((s) => s.id === id)
       if (index !== -1) {
-        steps.value[index].comments?.push(response?.data?.data)
+        steps.value[index].comments?.push(res?.data?.data)
       }
-      return response.status === 201
-    } catch (error) {
+      if (res.status === 201){
+        return {status:true, msg:res?.data.response_message}
+      }else{
+        return {status:true, msg:res?.data.response_message}
+      }
+    } catch (error:any) {
       console.error('Failed to fetch step:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -144,14 +148,14 @@ export const useStepStore = defineStore('step', () => {
       loading.value = true
       const response = await api.post<ResponseAPI>('/steps', step)
       steps.value.push(response?.data?.data)
-      if (response.status === 201) {
-        return true
-      } else {
-        return false
+      if (response.status === 201){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
       }
-    } catch (error) {
+    } catch (error:any) {
       console.error('Failed to create step:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -168,14 +172,14 @@ export const useStepStore = defineStore('step', () => {
       if (currentStep.value?.id === id) {
         currentStep.value = response?.data.data
       }
-      if (response.status === 200) {
-        return true
-      } else {
-        return false
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
       }
-    } catch (error) {
+    } catch (error:any) {
       console.error('Failed to update step:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -187,10 +191,14 @@ export const useStepStore = defineStore('step', () => {
       const response = await api.patch<ResponseAPI>(`/steps/status/${id}`, { state: state })
       const index = steps.value.findIndex((t) => t.id === id)
       steps.value[index] = response?.data?.data
-      return response.status === 200
-    } catch (error) {
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error:any) {
       console.error('Failed to update step status:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -202,30 +210,19 @@ export const useStepStore = defineStore('step', () => {
       const response = await api.patch<ResponseAPI>(`/steps/archived/${id}`)
       const index = steps.value.findIndex((t) => t.id === id)
       steps.value[index] = response?.data?.data
-      return response.status === 200
-    } catch (error) {
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error:any) {
       console.error('Failed to update step status:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
   }
 
-  const deleteStep = async (id: number) => {
-    try {
-      loading.value = true
-      await api.delete(`/steps/${id}`)
-      steps.value = steps.value.filter((s) => s.id !== id)
-      if (currentStep.value?.id === id) {
-        currentStep.value = null
-      }
-    } catch (error) {
-      console.error('Failed to delete step:', error)
-      throw error
-    } finally {
-      loading.value = false
-    }
-  }
 
   // Task methods
   const createTask = async (task: Omit<Task, 'id' | 'created_at' | 'updated_at' | 'status_id'>) => {
@@ -288,10 +285,14 @@ export const useStepStore = defineStore('step', () => {
     try {
       loading.value = true
       const response = await api.patch<ResponseAPI>(`/comments/${id}`, { content: content })
-      return response.status === 200
-    } catch (error) {
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error:any) {
       console.error('Failed to fetch step:', error)
-      false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -301,10 +302,14 @@ export const useStepStore = defineStore('step', () => {
     try {
       loading.value = true
       const response = await api.delete<ResponseAPI>(`/comments/${id}`)
-      return response.status === 200
-    } catch (error) {
+      if (response.status === 200){
+        return {status:true, msg:response?.data.response_message}
+      }else{
+        return {status:true, msg:response?.data.response_message}
+      }
+    } catch (error : any) {
       console.error('Failed to fetch step:', error)
-      return false
+      return {status:false, msg:error?.response?.data.response_message}
     } finally {
       loading.value = false
     }
@@ -414,11 +419,15 @@ export const useStepStore = defineStore('step', () => {
           step_id: stepId,
           notifications_enabled:notificationUpdate
         })
-        return res.status === 200
+        if (res.status === 200){
+          return {status:true, msg:res?.data.response_message}
+        }else{
+          return {status:true, msg:res?.data.response_message}
+        }
       }
-      catch (error) {
+      catch (error:any) {
         console.error('Failed to delete project:', error)
-        return false
+        return {status:false, msg:error?.response?.data.response_message}
       } finally {
         loading.value = false
       }
@@ -435,7 +444,6 @@ export const useStepStore = defineStore('step', () => {
     fetchStep,
     createStep,
     updateStep,
-    deleteStep,
     createTask,
     updateTask,
     updateStepStatus,

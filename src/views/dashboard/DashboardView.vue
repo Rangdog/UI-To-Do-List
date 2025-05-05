@@ -229,19 +229,17 @@ const handleSubmit = async () => {
   try {
     if (editingProject.value) {
       const res = await projectStore.updateProject(editingProject.value.id, form.value)
-      if (res) {
-        toast.success('Updated Project!')
-      }
-      else {
-        toast.error('Something went wrong!')
+      if (res?.status) {
+        toast.success("Updated Project!")
+      } else {
+        toast.error(res?.msg + "!")
       }
     } else {
       const res = await projectStore.createProject(form.value)
-      if (res) {
-        toast.success('Created Project!')
-      }
-      else {
-        toast.error('Something went wrong!')
+      if (res?.status) {
+        toast.success("Created Project!")
+      } else {
+        toast.error(res?.msg + "!")
       }
     }
     showCreateModal.value = false
@@ -266,7 +264,7 @@ const handleArchivedProject = async (id: number) => {
   if (confirm('Are you sure you want to Archived this project?')) {
     try {
       const res = await projectStore.updateStepArchived(id)
-      if (res) {
+      if (res?.status) {
         toast.success('Mark as archived!')
         projectStore.fetchFilteredProjects(
           {
@@ -280,7 +278,7 @@ const handleArchivedProject = async (id: number) => {
           }
         )
       } else {
-        toast.error('Something went wrong')
+        toast.error(res?.msg + "!")
       }
     } catch (error) {
       console.error('Failed to delete project:', error)
