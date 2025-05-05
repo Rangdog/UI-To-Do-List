@@ -339,11 +339,11 @@ const filters = ref({
 })
 const toggleNotification = async() => {
     const res = await stepStore.ToggleNotification(stepId,!notification.value)
-    if (res){
+    if (res.status){
       toast.success("Notification Changed!")
       await stepStore.fetchStep(stepId)
     }else{
-      toast.error("Something went wrong!")
+      toast.error(res.msg + "!")
     }
 };
 
@@ -381,13 +381,13 @@ const saveCommentEdit = async (commentId: number) => {
   const res = await stepStore.updateComment(commentId, 
     editedContent.value.trim()
   )
-  if(res){
+  if(res.status){
     await stepStore.fetchCommentForStep(step.value?.id||-1)
     editingCommentId.value = null
     editedContent.value = ''
     toast.success("Edited comment!")
   }else{
-    toast.error("Some thing went wrong!")
+    toast.error(res.msg + "!")
   }
 
 }
@@ -408,12 +408,12 @@ const deleteComment = async (commentId: number) => {
   if (confirm('Are you want delete this comment?')) {
     try {
       const res = await stepStore.deleteComment(commentId)
-      if (res) {
+      if (res.status) {
         await stepStore.fetchCommentForStep(step.value?.id||-1)
         toast.success('Deleted comment!')
       }
       else {
-        toast.error('Something went wrong!')
+        toast.error(res.msg + "!")
       }
     } catch (error) {
       console.error('Xoá bình luận thất bại:', error)
@@ -483,11 +483,11 @@ const confirmChangeStatus = async () => {
   if (!step.value || confirmStatus.value === null) return
   try {
     const res = await stepStore.updateStepStatus(step.value.id, confirmStatus.value)
-    if (res) {
+    if (res.status) {
       await stepStore.fetchStep(step.value.id) // Refresh lại step
-      toast.success('Changed status')
+      toast.success('Changed status!')
     } else {
-      toast.error('Something went wrong')
+      toast.error(res.msg + "!")
     }
   } catch (err) {
     console.error('Failed to update task status:', err)
@@ -502,11 +502,11 @@ const confirmChangeArchived = async () => {
 
   try {
     const res = await stepStore.updateStepArchived(step.value.id, confirmStatus.value)
-    if (res) {
+    if (res.status) {
       await stepStore.fetchStep(step.value.id) // Refresh lại step
       toast.success('Mark as archived!') // Refresh lại task
     } else {
-      toast.error('Something went wrong')
+      toast.error(res.msg + "!")
     }
   } catch (err) {
     console.error('Failed to update task status:', err)
@@ -551,11 +551,11 @@ const handleSubmit = async () => {
   try {
     if (editingTask.value) {
       const res = await taskStore.updateTask(editingTask.value.id, form.value)
-      if (res) {
+      if (res.status) {
         toast.success('Updated task!')
       }
       else {
-        toast.error('Something went wrong!')
+        toast.error(res.msg + "!")
       }
     } else {
       const res = await taskStore.createTask({
@@ -564,12 +564,12 @@ const handleSubmit = async () => {
         priority: 0,
         assigner: 0,
       })
-      if (res) {
+      if (res.status) {
         toast.success('Created task!')
         stepStore.fetchStep(step?.value?.id || -1)
       }
       else {
-        toast.error('Something went wrong!')
+        toast.error(res.msg + "!")
       }
     }
     showCreateTaskModal.value = false

@@ -128,7 +128,13 @@ onMounted(async () => {
 const updateUserRole = async (user: any) => {
   const selectedRole = roles.value.find(r => r.id === user.role_id);
   const roleTitle = selectedRole ? selectedRole.title : null;
-  await userRoleStore.updateUserRole({ userId: user.User.id, projectId: projectId, Slug: roleTitle || "" })
+  const res = await userRoleStore.updateUserRole({ userId: user.User.id, projectId: projectId, Slug: roleTitle || "" })
+  if (res?.status){
+    toast.success("Updated Role")
+  }else{
+    toast.error(res?.msg + "!")
+  }
+  await userRoleStore.fetchUsersRole(projectId)
 }
 
 const inviteUser = async () => {
