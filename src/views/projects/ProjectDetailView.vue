@@ -505,7 +505,7 @@ const saveCommentEdit = async (commentId: number, stepId: number) => {
   if (!editedContent.value.trim()) return
 
   const res = await stepStore.updateComment(commentId, editedContent.value)
-  if (res) {
+  if (res?.status) {
     // Cập nhật trong stepComments
     const index = stepComments[stepId].findIndex((c: any) => c.id === commentId)
     if (index !== -1) {
@@ -515,7 +515,7 @@ const saveCommentEdit = async (commentId: number, stepId: number) => {
     editedContent.value = ''
     toast.success("Edited comment!")
   } else {
-    toast.error("Some thing went wrong!")
+    toast.error(res.msg + "!")
   }
 }
 
