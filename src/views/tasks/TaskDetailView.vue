@@ -39,6 +39,7 @@
     </div>
     <div class="flex flex-wrap items-center gap-4">
       <!-- Select Box -->
+      <span class="text-sm font-medium text-gray-700">Assigner:</span>
       <select v-model="selectedAssigner"
         class="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
         <option :value = 0 >Select an Assigner</option>
@@ -56,6 +57,7 @@
 
     <div class="flex flex-wrap items-center gap-4">
       <!-- Select Box -->
+      <span class="text-sm font-medium text-gray-700">Priority:</span>
       <select v-model="selectedPriority"
         class="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
         <option value="0">Low</option>
@@ -350,7 +352,6 @@ const taskActions = computed(() => {
 });
 
 const setAssigner = async (userId: number) => {
-  console.log("userId",userId)
   const res = await taskStore.setAssigner(userId, taskId)
   if (res.status){
     toast.success("Assigned!")

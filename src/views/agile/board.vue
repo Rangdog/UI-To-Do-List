@@ -1,116 +1,73 @@
 <template>
-  <div class="flex space-x-4 p-4 bg-white shadow-md rounded mb-6">
-    <button class="px-4 py-2 rounded font-semibold"
-      :class="activeTab === 'project' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'"
-      @click="activeTab = 'project'">
-      Project
-    </button>
-    <button class="px-4 py-2 rounded font-semibold"
-      :class="activeTab === 'step' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'"
-      @click="activeTab = 'step'">
-      Step
-    </button>
-    <button class="px-4 py-2 rounded font-semibold"
-      :class="activeTab === 'task' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-800'"
-      @click="activeTab = 'task'">
-      Task
-    </button>
-  </div>
-  <div v-if="activeTab === 'project'" class="p-6 bg-gray-50 min-h-screen">
-    <h1 class="text-2xl font-bold mb-6">Project</h1>
-    <div class="flex space-x-4">
-      <div v-for="column in project" :key="column.id" class="bg-white rounded-lg shadow-md w-1/2 flex-shrink-0">
-        <div class="p-4 border-b font-semibold text-gray-700">
-          {{ column.title }} {{ column.items?.length }}
+  <div v-if="!activeProject">
+    <h1 class="text-2xl font-bold mb-6">Projects</h1>
+    <div class="grid grid-cols-3 gap-4">
+      <div v-for="item in paginatedProjects" :key="item.project.id"
+        class="relative border rounded-xl p-4 shadow bg-white cursor-pointer hover:bg-gray-100"
+        @click="selectProject(item)">
+        <div class="text-sm font-medium text-gray-900">
+          {{ item.project.name }}
         </div>
-        <div class="p-2 space-y-3">
-          <div v-for="item in column.items" :key="item.name"
-            :class="['border rounded-xl p-4 shadow transition-all', column.id == 'archive' ? 'bg-gray-200' : 'bg-white ']">
-            <router-link :to="`/projects/${item.id}`" class="text-sm font-medium text-blue-600 hover:underline">
-              <div class="text-sm font-medium text-gray-900">
-                {{ item.name }}
-              </div>
-              <div class="inline-block mt-2 text-xs font-semibold px-2 py-1 rounded bg-yellow-300 text-gray-800">
-                {{ item.description }}
-              </div>
-              <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
-                <div class="flex items-center gap-1">
-                  <span>Owner:</span>
-                  <span>{{ item.user.name }}</span>
-                </div>
-              </div>
-            </router-link>
-          </div>
+        <div class="inline-block mt-2 text-xs font-semibold px-2 py-1 rounded bg-yellow-300 text-gray-800">
+          {{ item.project.description }}
         </div>
-      </div>
-    </div>
-  </div>
-  <div v-if="activeTab === 'step'" class="p-6 bg-gray-50 min-h-screen">
-    <h1 class="text-2xl font-bold mb-6">Step</h1>
-    <div class="flex space-x-4">
-      <div v-for="column in steps" :key="column.id" class="bg-white rounded-lg shadow-md w-1/4 flex-shrink-0">
-        <div class="p-4 border-b font-semibold text-gray-700">
-          {{ column.title }} {{ column.items?.length }}
+        <div class="mt-2 text-xs text-gray-500">
+          Owner: {{ item.user.name }}
         </div>
-        <div class="p-2 space-y-3">
-          <div v-for="item in column.items" :key="item.name"
-            :class="['border rounded-xl p-4 shadow transition-all', column.id == 'archive' ? 'bg-gray-200' : column.id == 'pending' ? 'bg-yellow-50' : column.id == 'processing' ? 'bg-blue-100' : column.id == 'success' ? 'bg-green-100' : 'bg-white']">
-            <router-link :to="`/steps/${item.id}`" class="block">
-              <div class="text-sm font-medium text-gray-900">
-                {{ item.name }}
-              </div>
-              <div class="inline-block mt-2 text-xs font-semibold px-2 py-1 rounded bg-yellow-300 text-gray-800">
-                {{ item.description }}
-              </div>
-              <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
-                <div class="flex items-center gap-1">
-                  <span>Owner:</span>
-                  <span>{{ item.user.name }}</span>
-                </div>
 
-              </div>
-            </router-link>
-          </div>
+        <!-- Archived badge -->
+        <div v-if="item.project.is_archived === true"
+          class="absolute bottom-2 right-2 text-[10px] px-2 py-0.5 bg-gray-300 text-red-700 rounded">
+          Complete
         </div>
       </div>
     </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-center mt-6 space-x-2">
+      <button class="px-3 py-1 border rounded text-sm" :disabled="currentPage === 1" @click="currentPage--">
+        Prev
+      </button>
+      <button class="px-3 py-1 border rounded text-sm" :disabled="currentPage === totalPages" @click="currentPage++">
+        Next
+      </button>
+    </div>
   </div>
-  <div v-if="activeTab === 'task'" class="p-6 bg-gray-50 min-h-screen">
-    <h1 class="text-2xl font-bold mb-6">Task</h1>
-    <div class="flex space-x-4">
-      <div v-for="column in tasks" :key="column.id" class="bg-white rounded-lg shadow-md w-1/4 flex-shrink-0">
-        <div class="p-4 border-b font-semibold text-gray-700">
-          {{ column.title }} {{ column.items?.length }}
-        </div>
-        <div class="p-2 space-y-3">
-          <div v-for="item in column.items" :key="item.name"
-            :class="['border rounded-xl p-4 shadow transition-all', column.id == 'archive' ? 'bg-gray-200' : column.id == 'pending' ? 'bg-yellow-50' : column.id == 'processing' ? 'bg-blue-100' : column.id == 'success' ? 'bg-green-100' : 'bg-white']">
-            <router-link :to="`/tasks/${item.id}`" class="block">
-              <div class="text-sm font-medium text-gray-800">
-                {{ item.name }}
-              </div>
-              <!-- Description Badge -->
-              <div class="inline-block mt-2 text-xs font-medium px-2 py-1 rounded-full bg-yellow-300 text-gray-800">
-                {{ item.description }}
-              </div>
-              <div class="mt-3 text-sm">
-                <span class="font-medium text-gray-600">Priority:</span>
-                <span :class="[
-                  'ml-1 px-2 py-0.5 rounded-full text-xs font-semibold',
-                  item.priority === 0 ? 'bg-gray-200 text-gray-700' :
-                    item.priority === 1 ? 'bg-yellow-200 text-yellow-800' :
-                      item.priority === 2 ? 'bg-red-200 text-red-800' : ''
-                ]">
-                  {{ item.priority === 0 ? 'Low' : item.priority === 1 ? 'Medium' : 'High' }}
+
+  <!-- Khi đã chọn một project -->
+  <div v-else>
+    <div class="mb-6">
+      <button class="text-blue-600 hover:underline text-sm" @click="backToProject">
+        ← Back to Projects
+      </button>
+      <h1 class="text-2xl font-bold mt-2">{{ activeProject.name }}</h1>
+      <p class="text-gray-600">{{ activeProject.description }}</p>
+    </div>
+
+    <div class="flex">
+      <div v-for="(column, index) in kanbanColumns" :key="column.id" class="w-1/4 p-4"
+        :class="index === 0 ? 'bg-gray-200' : index === 1 ? 'bg-blue-100' : index === 2 ? 'bg-green-100' : 'bg-red-100'">
+        <h2 class="font-bold mb-2">{{ column.title }} ({{ column.items.length }})</h2>
+        <div class="scroll-container">
+          <div v-for="item in column.items" :key="item.id" class="border rounded p-2 mb-2"
+            :class="item.type === 'step' ? 'bg-blue-50' : 'bg-yellow-50'">
+            <router-link :to="item.type === 'step' ? `/steps/${item.id}` : `/tasks/${item.id}`" class="block"
+              @click.native="selectBoard">
+              <div class="flex justify-between items-center">
+                <div class="font-medium">{{ item.name }}</div>
+                <span class="text-[10px] px-2 py-0.5 rounded"
+                  :class="item.type === 'step' ? 'bg-blue-200 text-blue-800' : 'bg-yellow-200 text-yellow-800'">
+                  {{ item.type.toUpperCase() }}
                 </span>
               </div>
-              <div class="mt-1 text-sm text-gray-700">
-                <span class="font-medium">Assigner:</span>
-                {{ item.assigner?.username || 'None' }}
-              </div>
-              <div class="mt-1 flex items-center text-sm text-gray-700">
-                <span class="font-medium mr-1">Owner:</span>
-                <span>{{ item.user.name }}</span>
+              <div class="text-sm text-gray-600">{{ item.description }}</div>
+              <div class="text-xs text-gray-500 mt-1">Owner: {{ item.user?.name }}</div>
+              <div v-if="item.type === 'task'" class="text-[10px] mt-1 text-gray-600">
+                <div class="mb-1">Assigner : {{ item?.assigner?.username }}</div>
+                <div v-if="item.priority === 0">Priority: Low</div>
+                <div v-else-if="item.priority === 1">Priority: Medium</div>
+                <div v-else-if="item.priority === 2">Priority: High</div>
+                <div>Step: {{ item.step_name }}</div>
               </div>
             </router-link>
           </div>
@@ -118,66 +75,139 @@
       </div>
     </div>
   </div>
-  <!-- <div class="p-6 bg-gray-50 min-h-screen">
-      <h1 class="text-2xl font-bold mb-6">Board</h1>
-      <div class="flex space-x-4 overflow-x-auto">
-        <div
-          v-for="column in columns"
-          :key="column.id"
-          class="bg-white rounded-lg shadow-md w-72 flex-shrink-0"
-        >
-          <div class="p-4 border-b font-semibold text-gray-700">
-            {{ column.title }} {{ column.tasks.length }}
-          </div>
-          <div class="p-2 space-y-3">
-            <div
-              v-for="task in column.tasks"
-              :key="task.id"
-              class="bg-white border rounded p-3 shadow-sm"
-            >
-              <div class="text-sm font-medium text-gray-900">
-                {{ task.title }}
-              </div>
-              <div
-                class="inline-block mt-2 text-xs font-semibold px-2 py-1 rounded bg-yellow-300 text-gray-800"
-              >
-                {{ task.tag }}
-              </div>
-              <div class="mt-2 flex items-center justify-between text-xs text-gray-500">
-                <div class="flex items-center gap-1">
-                  <span>⬆️</span>
-                  <span>{{ task.votes }}</span>
-                </div>
-                <div>{{ task.code }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div> -->
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue'
 import { useProjectStore } from '@/stores/project'
 import { useStepStore } from '@/stores/step'
 import { useTaskStore } from '@/stores/task'
 
+const currentPage = ref(1)
+const pageSize = 15
 
-const activeTab = ref(localStorage.getItem('activeAgileTab') || 'project')
+const totalPages = computed(() => {
+  return Math.ceil(project.value.length / pageSize)
+})
+
+const paginatedProjects = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  const end = start + pageSize
+  return project.value.slice(start, end)
+})
+
+// Stores
 const projectStore = useProjectStore()
 const stepStore = useStepStore()
 const taskStore = useTaskStore()
-const project = computed(() => projectStore.projectsAgile)
-const steps = computed(() => stepStore.stepsAgile)
-const tasks = computed(() => taskStore.tasksAgile)
-watch(activeTab, (newTab) => {
-  localStorage.setItem('activeAgileTab', newTab)
-})
 
+// Data refs
+const activeProject = ref<any>(null)
+const kanbanColumns = ref<any[]>([])
+
+// Computed values
+const project = computed(() => projectStore.projectsAgile)
+
+
+
+// Select project
+async function selectProject(project: any) {
+  activeProject.value = project
+  await stepStore.fetchFilteredStepsForAgile(activeProject?.value?.project?.id)
+  await taskStore.fetchFilteredTasksForAgile(activeProject?.value?.project?.id)
+  updateKanbanColumns()
+  localStorage.setItem('projectBoard', JSON.stringify(activeProject?.value?.project?.id))
+}
+
+const backToProject = () =>{
+  activeProject.value = null
+  localStorage.removeItem("projectBoard")
+}
+
+function updateKanbanColumns() {
+  const steps = stepStore.stepsAgile.map(step => ({
+    id: step.step.id,
+    name: step.step.name,
+    description: step.step.description,
+    user: step.user,
+    status_id: step.step.status_id,
+    is_archived: step.step.is_archived,
+    step_name: null,
+    assigner: null,
+    priority: null,
+    type: 'step',
+  }))
+
+  const tasks = taskStore.tasksAgile.map(task => ({
+    id: task.task.id,
+    name: task.task.name,
+    description: task.task.description,
+    user: task.user,
+    status_id: task.task.status_id,
+    is_archived: task.task.is_archived,
+    step_name: task.task.Step.name,
+    assigner: task.assigner,
+    priority: task.task.priority,
+    type: 'task',
+  }))
+
+  const allItems = [...steps, ...tasks]
+
+  kanbanColumns.value = [
+    {
+      id: 1,
+      title: 'Pending',
+      items: allItems.filter(item => item.status_id === 2 && !item.is_archived),
+    },
+    {
+      id: 2,
+      title: 'Processing',
+      items: allItems.filter(item => item.status_id === 3 && !item.is_archived),
+    },
+    {
+      id: 0,
+      title: 'Success',
+      items: allItems.filter(item => item.status_id === 1 && !item.is_archived),
+    },
+    {
+      id: 'archived',
+      title: 'Archived',
+      items: allItems.filter(item => item.is_archived),
+    },
+  ]
+  localStorage.setItem('kanbanColumns', JSON.stringify(kanbanColumns.value))
+}
+function selectBoard() {
+  updateKanbanColumns()
+  localStorage.setItem('kanbanColumns', JSON.stringify(kanbanColumns.value))
+}
+
+
+// Load data
 onMounted(async () => {
+  const project_id = localStorage.getItem('projectBoard')
+  if(project_id){
+    await stepStore.fetchFilteredStepsForAgile(Number(project_id))
+    await taskStore.fetchFilteredTasksForAgile(Number(project_id))
+    activeProject.value = project_id
+    updateKanbanColumns()
+  }
   await projectStore.fetchFilteredProjectsForAgile()
-  await stepStore.fetchFilteredStepsForAgile()
-  await taskStore.fetchFilteredTasksForAgile()
 })
 </script>
+
+<style scoped>
+.scroll-container {
+  max-height: 600px;
+  /* Giới hạn chiều cao */
+  overflow-y: hidden;
+  /* Ẩn thanh cuộn khi không hover */
+  transition: all 0.3s ease;
+  /* Thêm hiệu ứng chuyển đổi */
+}
+
+.scroll-container:hover {
+  overflow-y: auto;
+  /* Hiển thị thanh cuộn khi hover */
+}
+</style>

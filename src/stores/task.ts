@@ -26,16 +26,6 @@ export interface Comment {
   User?: any
 }
 
-export class Agile {
-  id: string
-  title: string
-  items: any[] = []
-
-  constructor() {
-    this.id = "";
-    this.title = "";
-  }
-}
 
 interface ResponseAPI {
   response_key: string
@@ -45,7 +35,7 @@ interface ResponseAPI {
 
 export const useTaskStore = defineStore('task', () => {
   const tasks = ref<Task[]>([])
-  const tasksAgile = ref<Agile[]>([])
+  const tasksAgile = ref<any[]>([])
   const currentTask = ref<Task | null>(null)
   const comment = ref<Comment[]>([])
   const loading = ref(false)
@@ -257,78 +247,10 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
-  const fetchFilteredTasksForAgile = async () => {
+  const fetchFilteredTasksForAgile = async (projectId: number) => {
     loading.value = true
-    const res = await api.get(`/tasks/agile`)
-    let tasks: Agile[] = []
-    const keySet = new Set(tasks.map(task => task.id));
-    const missingTasks = ["pending", "processing", "success", "archive",]
-      .filter(id => !keySet.has(id))
-      .map(id => {
-        const task = new Agile();
-        task.id = id;
-        task.title = id.toUpperCase();
-        return task;
-      });
-
-    tasks.push(...missingTasks);
-    for (let i = 0; i < res?.data?.data?.length; i++) {
-      let task: Agile = new Agile()
-      if (res?.data?.data[i].task.is_archived) {
-        const key = tasks.find(s => s.id === "archive")
-        let item: any = {
-          id: res?.data?.data[i].task.id,
-          name: res?.data?.data[i].task.name,
-          description: res?.data?.data[i].task.description,
-          user: {
-            name: res?.data?.data[i]?.user?.username
-          },
-          priority: res?.data?.data[i].task.priority,
-          assigner: res?.data?.data[i].assigner
-        }
-        if (key) key.items.push(item)
-      } else if (res?.data?.data[i].task.status_id == 1) {
-        const key = tasks.find(s => s.id === "success")
-        let item: any = {
-          id: res?.data?.data[i].task.id,
-          name: res?.data?.data[i].task.name,
-          description: res?.data?.data[i].task.description,
-          user: {
-            name: res?.data?.data[i]?.user?.username
-          },
-          priority: res?.data?.data[i].task.priority,
-          assigner: res?.data?.data[i].assigner
-        }
-        if (key) key.items.push(item)
-      } else if (res?.data?.data[i].task.status_id == 2) {
-        const key = tasks.find(s => s.id === "pending")
-        let item: any = {
-          id: res?.data?.data[i].task.id,
-          name: res?.data?.data[i].task.name,
-          description: res?.data?.data[i].task.description,
-          user: {
-            name: res?.data?.data[i]?.user?.username
-          },
-          priority: res?.data?.data[i].task.priority,
-          assigner: res?.data?.data[i].assigner
-        }
-        if (key) key.items.push(item)
-      } else {
-        const key = tasks.find(s => s.id === "processing")
-        let item: any = {
-          id: res?.data?.data[i].task.id,
-          name: res?.data?.data[i].task.name,
-          description: res?.data?.data[i]?.task?.description,
-          user: {
-            name: res?.data?.data[i]?.user?.username
-          },
-          priority: res?.data?.data[i].task.priority,
-          assigner: res?.data?.data[i].assigner
-        }
-        if (key) key.items.push(item)
-      }
-    }
-    tasksAgile.value = tasks
+    const res = await api.get(`/tasks/agile/${projectId}`)
+    tasksAgile.value = res.data.data
   }
 
   const setAssigner = async (userId: number, taskId: number) => {

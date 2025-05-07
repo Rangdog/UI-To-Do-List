@@ -31,7 +31,7 @@ export class ProjectAgile {
 
 export const useProjectStore = defineStore('project', () => {
   const projects = ref<Project[]>([])
-  const projectsAgile = ref<ProjectAgile[]>([])
+  const projectsAgile = ref<any[]>([])
   const currentProject = ref<Project | null>(null)
   const notification = ref(false)
   const loading = ref(false)
@@ -155,44 +155,7 @@ export const useProjectStore = defineStore('project', () => {
   const fetchFilteredProjectsForAgile = async () => {
     loading.value = true
     const res = await api.get(`/projects/agile`)
-    let projects: ProjectAgile[] = []
-    const keySet = new Set(projects.map(project => project.id));
-    const missingProjects = ["project", "archive"]
-      .filter(id => !keySet.has(id))
-      .map(id => {
-        const project = new ProjectAgile();
-        project.id = id;
-        project.title = id.toUpperCase();
-        return project;
-      });
-    projects.push(...missingProjects)
-    for (let i = 0; i < res?.data?.data?.length; i++) {
-      let project: ProjectAgile = new ProjectAgile()
-      if (res?.data?.data[i].project.is_archived) {
-        const key = projects.find(p => p.id === "archive")
-        let item: any = {
-          id: res?.data?.data[i].project.id,
-          name: res?.data?.data[i].project.name,
-          description: res?.data?.data[i].project.description,
-          user: {
-            name: res?.data?.data[i].user.username
-          }
-        }
-        if (key) key.items.push(item)
-      } else {
-        const key = projects.find(p => p.id === "project")
-        let item: any = {
-          id: res?.data?.data[i].project.id,
-          name: res?.data?.data[i].project.name,
-          description: res?.data?.data[i].project.description,
-          user: {
-            name: res?.data?.data[i].user.username
-          }
-        }
-        if (key) key.items.push(item)
-      }
-    }
-    projectsAgile.value = projects
+    projectsAgile.value = res.data.data
   }
 
   const ToggleNotification = async (projectId: number, notificationUpdate :boolean) => {
