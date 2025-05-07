@@ -60,7 +60,7 @@ export class Agile {
 export const useStepStore = defineStore('step', () => {
   const steps = ref<Step[]>([])
   const comments =ref<Comment[]>([])
-  const stepsAgile = ref<Agile[]>([])
+  const stepsAgile = ref<any[]>([])
   const currentStep = ref<Step | null>(null)
   const loading = ref(false)
   const notification = ref(false)
@@ -345,70 +345,10 @@ export const useStepStore = defineStore('step', () => {
   }
 
 
-  const fetchFilteredStepsForAgile = async () => {
+  const fetchFilteredStepsForAgile = async (projectId : number) => {
     loading.value = true
-    const res = await api.get(`/steps/agile`)
-    let steps: Agile[] = []
-    const keySet = new Set(steps.map(step => step.id));
-    const missingSteps = ["pending", "processing", "success", "archive",]
-      .filter(id => !keySet.has(id))
-      .map(id => {
-        const step = new Agile();
-        step.id = id;
-        step.title = id.toUpperCase();
-        return step;
-      });
-
-    steps.push(...missingSteps);
-    for (let i = 0; i < res?.data?.data?.length; i++) {
-      let step: Agile = new Agile()
-      if (res?.data?.data[i].step.is_archived) {
-        const key = steps.find(s => s.id === "archive")
-        let item: any = {
-          id: res?.data?.data[i].step.id,
-          name: res?.data?.data[i].step.name,
-          description: res?.data?.data[i].step.description,
-          user: {
-            name: res?.data?.data[i].user.username
-          }
-        }
-        if (key) key.items.push(item)
-      } else if (res?.data?.data[i].step.status_id == 1) {
-        const key = steps.find(s => s.id === "success")
-        let item: any = {
-          id: res?.data?.data[i].step.id,
-          name: res?.data?.data[i].step.name,
-          description: res?.data?.data[i].step.description,
-          user: {
-            name: res?.data?.data[i].user.username
-          }
-        }
-        if (key) key.items.push(item)
-      } else if (res?.data?.data[i].step.status_id == 2) {
-        const key = steps.find(s => s.id === "pending")
-        let item: any = {
-          id: res?.data?.data[i].step.id,
-          name: res?.data?.data[i].step.name,
-          description: res?.data?.data[i].step.description,
-          user: {
-            name: res?.data?.data[i].user.username
-          }
-        }
-        if (key) key.items.push(item)
-      } else {
-        const key = steps.find(s => s.id === "processing")
-        let item: any = {
-          id: res?.data?.data[i].step.id,
-          name: res?.data?.data[i].step.name,
-          description: res?.data?.data[i].step.description,
-          user: {
-            name: res?.data?.data[i].user.username
-          }
-        }
-        if (key) key.items.push(item)
-      }
-    }
-    stepsAgile.value = steps
+    const res = await api.get(`/steps/agile/${projectId}`)
+    stepsAgile.value = res.data.data
   }
 
 
