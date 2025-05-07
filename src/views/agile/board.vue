@@ -28,6 +28,7 @@
       <button class="px-3 py-1 border rounded text-sm" :disabled="currentPage === 1" @click="currentPage--">
         Prev
       </button>
+      <span class="text-sm">{{ currentPage }} / {{ totalPages }}</span>
       <button class="px-3 py-1 border rounded text-sm" :disabled="currentPage === totalPages" @click="currentPage++">
         Next
       </button>
@@ -45,32 +46,38 @@
     </div>
 
     <div class="flex">
-      <div v-for="(column, index) in kanbanColumns" :key="column.id" class="w-1/4 p-4"
+      <div v-for="(column, index) in kanbanStore.kanbanColumns" :key="column.id" class="w-1/4 p-4"
         :class="index === 0 ? 'bg-gray-200' : index === 1 ? 'bg-blue-100' : index === 2 ? 'bg-green-100' : 'bg-red-100'">
+
         <h2 class="font-bold mb-2">{{ column.title }} ({{ column.items.length }})</h2>
         <div class="scroll-container">
-          <div v-for="item in column.items" :key="item.id" class="border rounded p-2 mb-2"
-            :class="item.type === 'step' ? 'bg-blue-50' : 'bg-yellow-50'">
-            <router-link :to="item.type === 'step' ? `/steps/${item.id}` : `/tasks/${item.id}`" class="block"
-              @click.native="selectBoard">
-              <div class="flex justify-between items-center">
-                <div class="font-medium">{{ item.name }}</div>
-                <span class="text-[10px] px-2 py-0.5 rounded"
-                  :class="item.type === 'step' ? 'bg-blue-200 text-blue-800' : 'bg-yellow-200 text-yellow-800'">
-                  {{ item.type.toUpperCase() }}
-                </span>
+          <draggable v-model="column.items" :group="{ name: 'kanban', pull: 'clone', put: true }" :itemKey="'id'"
+            :data-id="column.id" @change="handleDragEnd(column)">
+            <template #item="{ element }">
+              <div :key="element.id" class="border rounded p-2 mb-2"
+                :class="element.type === 'step' ? 'bg-blue-50' : 'bg-yellow-50'">
+                <router-link :to="element.type === 'step' ? `/steps/${element.id}` : `/tasks/${element.id}`"
+                  class="block">
+                  <div class="flex justify-between items-center">
+                    <div class="font-medium">{{ element.name }}</div>
+                    <span class="text-[10px] px-2 py-0.5 rounded"
+                      :class="element.type === 'step' ? 'bg-blue-200 text-blue-800' : 'bg-yellow-200 text-yellow-800'">
+                      {{ element.type.toUpperCase() }}
+                    </span>
+                  </div>
+                  <div class="text-sm text-gray-600">{{ element.description }}</div>
+                  <div class="text-xs text-gray-500 mt-1">Owner: {{ element.user?.name }}</div>
+                  <div v-if="element.type === 'task'" class="text-[10px] mt-1 text-gray-600">
+                    <div class="mb-1">Assigner: {{ element?.assigner?.username }}</div>
+                    <div v-if="element.priority === 0">Priority: Low</div>
+                    <div v-else-if="element.priority === 1">Priority: Medium</div>
+                    <div v-else-if="element.priority === 2">Priority: High</div>
+                    <div>Step: {{ element.step_name }}</div>
+                  </div>
+                </router-link>
               </div>
-              <div class="text-sm text-gray-600">{{ item.description }}</div>
-              <div class="text-xs text-gray-500 mt-1">Owner: {{ item.user?.name }}</div>
-              <div v-if="item.type === 'task'" class="text-[10px] mt-1 text-gray-600">
-                <div class="mb-1">Assigner : {{ item?.assigner?.username }}</div>
-                <div v-if="item.priority === 0">Priority: Low</div>
-                <div v-else-if="item.priority === 1">Priority: Medium</div>
-                <div v-else-if="item.priority === 2">Priority: High</div>
-                <div>Step: {{ item.step_name }}</div>
-              </div>
-            </router-link>
-          </div>
+            </template>
+          </draggable>
         </div>
       </div>
     </div>
@@ -82,6 +89,10 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useProjectStore } from '@/stores/project'
 import { useStepStore } from '@/stores/step'
 import { useTaskStore } from '@/stores/task'
+import { useKanbanStore } from '@/stores/kanban' // Import store mới
+import draggable from 'vuedraggable'  // Import vuedraggable
+import { useToast } from 'vue-toastification'
+const toast = useToast()
 
 const currentPage = ref(1)
 const pageSize = 15
@@ -100,15 +111,66 @@ const paginatedProjects = computed(() => {
 const projectStore = useProjectStore()
 const stepStore = useStepStore()
 const taskStore = useTaskStore()
+const kanbanStore = useKanbanStore() // Sử dụng store Pinia cho kanbanColumns
 
 // Data refs
 const activeProject = ref<any>(null)
-const kanbanColumns = ref<any[]>([])
 
-// Computed values
 const project = computed(() => projectStore.projectsAgile)
 
+// Hàm xử lý khi kéo thả (drag)
+async function handleDragEnd(column: any) {
+  const movedItem = column.items[0]
+  const toColumnId = column.id
+  let newStatusId: number = 0
+  
+  switch (toColumnId) {
+    case 1: newStatusId = 2; break
+    case 2: newStatusId = 3; break
+    case 0: newStatusId = 1; break
+    case 'archived': newStatusId = 4; break
+  }
 
+  // Wait for the store updates if they are async
+  if (newStatusId === 4) {
+    if (movedItem.type === 'task') {
+      const res = await taskStore.updateTaskArchived(movedItem.id)
+      if (res.status){
+        toast.success("Success!")
+      }else{
+        toast.error(res.msg + "!")
+      }
+    } else {
+      const res = await stepStore.updateStepArchived(movedItem.id)
+      if (res.status){
+        toast.success("Success!")
+      }else{
+        toast.error(res.msg + "!")
+      }
+    }
+  } else if (movedItem.type === 'task') {
+    const res = await taskStore.updateTaskStatus(movedItem.id, newStatusId)
+    if (res.status){
+        toast.success("Success!")
+      }else{
+        toast.error(res.msg + "!")
+      }
+  } else if (movedItem.type === 'step') {
+    const res = await stepStore.updateStepStatus(movedItem.id, newStatusId)
+    if (res.status){
+        toast.success("Success!")
+      }else{
+        toast.error(res.msg + "!")
+      }
+  }
+
+  // Once the updates are completed, update the Kanban columns and local storage
+  const projectId = localStorage.getItem("projectId")
+  await stepStore.fetchFilteredStepsForAgile(Number(projectId))
+  await taskStore.fetchFilteredTasksForAgile(Number(projectId))
+  updateKanbanColumns()
+  localStorage.setItem('kanbanColumns', JSON.stringify(kanbanStore.kanbanColumns))
+}
 
 // Select project
 async function selectProject(project: any) {
@@ -117,11 +179,14 @@ async function selectProject(project: any) {
   await taskStore.fetchFilteredTasksForAgile(activeProject?.value?.project?.id)
   updateKanbanColumns()
   localStorage.setItem('projectBoard', JSON.stringify(activeProject?.value?.project?.id))
+  localStorage.setItem('kanbanColumns', JSON.stringify(kanbanStore.kanbanColumns))
+  localStorage.setItem('projectId',activeProject?.value?.project?.id )
 }
 
-const backToProject = () =>{
+const backToProject = () => {
   activeProject.value = null
   localStorage.removeItem("projectBoard")
+  localStorage.removeItem("projectId")
 }
 
 function updateKanbanColumns() {
@@ -153,7 +218,7 @@ function updateKanbanColumns() {
 
   const allItems = [...steps, ...tasks]
 
-  kanbanColumns.value = [
+  kanbanStore.updateKanbanColumns([
     {
       id: 1,
       title: 'Pending',
@@ -174,21 +239,16 @@ function updateKanbanColumns() {
       title: 'Archived',
       items: allItems.filter(item => item.is_archived),
     },
-  ]
-  localStorage.setItem('kanbanColumns', JSON.stringify(kanbanColumns.value))
+  ])
 }
-function selectBoard() {
-  updateKanbanColumns()
-  localStorage.setItem('kanbanColumns', JSON.stringify(kanbanColumns.value))
-}
-
 
 // Load data
 onMounted(async () => {
   const project_id = localStorage.getItem('projectBoard')
-  if(project_id){
+  if (project_id) {
     await stepStore.fetchFilteredStepsForAgile(Number(project_id))
     await taskStore.fetchFilteredTasksForAgile(Number(project_id))
+    localStorage.setItem("projectId", project_id)
     activeProject.value = project_id
     updateKanbanColumns()
   }

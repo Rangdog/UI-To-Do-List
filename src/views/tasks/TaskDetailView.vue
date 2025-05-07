@@ -226,7 +226,7 @@ const confirmChangeArchived = async () => {
   if (!task.value || confirmStatus.value === null) return
 
   try {
-    const res = await taskStore.updateTaskArchived(task.value.id, confirmStatus.value)
+    const res = await taskStore.updateTaskArchived(task.value.id)
     if (res.status) {
       await taskStore.fetchTask(task.value.id)
       toast.success('Mark as archived!') // Refresh lại task

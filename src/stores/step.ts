@@ -204,7 +204,7 @@ export const useStepStore = defineStore('step', () => {
     }
   }
 
-  const updateStepArchived = async (id: number, state: number) => {
+  const updateStepArchived = async (id: number) => {
     try {
       loading.value = true
       const response = await api.patch<ResponseAPI>(`/steps/archived/${id}`)

@@ -11,7 +11,7 @@ export interface Task {
   status_id: number
   step_id: number
   priority: number
-  assigner: number
+  assigner: any
   comments?: Comment[]
 }
 
@@ -144,10 +144,10 @@ export const useTaskStore = defineStore('task', () => {
     }
   }
 
-  const updateTaskArchived = async (id: number, state: number) => {
+  const updateTaskArchived = async (id: number) => {
     try {
       loading.value = true
-      const response = await api.patch<ResponseAPI>(`/tasks/archived/${id}`, { state: state })
+      const response = await api.patch<ResponseAPI>(`/tasks/archived/${id}`)
       const index = tasks.value.findIndex((t) => t.id === id)
       tasks.value[index] = response?.data?.data
       if (response.status === 200){

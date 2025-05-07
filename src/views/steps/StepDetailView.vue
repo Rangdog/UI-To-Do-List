@@ -501,7 +501,7 @@ const confirmChangeArchived = async () => {
   if (!step.value || confirmStatus.value === null) return
 
   try {
-    const res = await stepStore.updateStepArchived(step.value.id, confirmStatus.value)
+    const res = await stepStore.updateStepArchived(step.value.id)
     if (res.status) {
       await stepStore.fetchStep(step.value.id) // Refresh lại step
       toast.success('Mark as archived!') // Refresh lại task
