@@ -247,6 +247,7 @@ async function handleDragEnd(event: any, column: any) {
       if (res.status) {
         toast.success("Success!")
       } else {
+        console.log(res.msg)
         toast.error(res.msg + "!")
       }
     } else {
