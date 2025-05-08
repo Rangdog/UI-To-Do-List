@@ -348,7 +348,6 @@ export const useStepStore = defineStore('step', () => {
   const fetchFilteredStepsForAgile = async (projectId : number) => {
     loading.value = true
     const res = await api.get(`/steps/agile/${projectId}`)
-    console.log(res)
     stepsAgile.value = res.data.data
   }
 
