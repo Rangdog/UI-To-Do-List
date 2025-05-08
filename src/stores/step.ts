@@ -97,6 +97,7 @@ export const useStepStore = defineStore('step', () => {
     try {
       loading.value = true
       const response = await api.get<ResponseAPI>(`/comments/step/${id}`)
+      console.log(response)
       const index = steps.value.findIndex((s) => s.id === id)
       if (index !== -1) {
         steps.value[index].comments = response?.data?.data ?? []
