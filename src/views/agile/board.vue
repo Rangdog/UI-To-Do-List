@@ -50,9 +50,9 @@
         :class="index === 0 ? 'bg-gray-200' : index === 1 ? 'bg-blue-100' : index === 2 ? 'bg-green-100' : 'bg-red-100'">
 
         <h2 class="font-bold mb-2">{{ column.title }} ({{ column.items.length }})</h2>
-        <div class="scroll-container">
+        <div class="scroll-container" :data-list="column.id">
           <draggable v-model="column.items" :group="{ name: 'kanban', pull: 'clone', put: true }" :itemKey="'id'"
-            :data-id="column.id" @change="handleDragEnd(column)">
+              @change="(event) => handleDragEnd(event,column)">
             <template #item="{ element }">
               <div :key="element.id" class="border rounded p-2 mb-2"
                 :class="element.type === 'step' ? 'bg-blue-50' : 'bg-yellow-50'">
@@ -119,11 +119,11 @@ const activeProject = ref<any>(null)
 const project = computed(() => projectStore.projectsAgile)
 
 // Hàm xử lý khi kéo thả (drag)
-async function handleDragEnd(column: any) {
-  const movedItem = column.items[0]
+async function handleDragEnd(event:any,column: any) {
+  const movedItem =event.added.element
   const toColumnId = column.id
   let newStatusId: number = 0
-  
+
   switch (toColumnId) {
     case 1: newStatusId = 2; break
     case 2: newStatusId = 3; break
@@ -180,7 +180,7 @@ async function selectProject(project: any) {
   updateKanbanColumns()
   localStorage.setItem('projectBoard', JSON.stringify(activeProject?.value?.project?.id))
   localStorage.setItem('kanbanColumns', JSON.stringify(kanbanStore.kanbanColumns))
-  localStorage.setItem('projectId',activeProject?.value?.project?.id )
+  localStorage.setItem('projectId', activeProject?.value?.project?.id)
 }
 
 const backToProject = () => {
@@ -221,22 +221,22 @@ function updateKanbanColumns() {
   kanbanStore.updateKanbanColumns([
     {
       id: 1,
-      title: 'Pending',
+      title: 'TO DO',
       items: allItems.filter(item => item.status_id === 2 && !item.is_archived),
     },
     {
       id: 2,
-      title: 'Processing',
+      title: 'IN PROGRESS',
       items: allItems.filter(item => item.status_id === 3 && !item.is_archived),
     },
     {
       id: 0,
-      title: 'Success',
+      title: 'IN REVIEW',
       items: allItems.filter(item => item.status_id === 1 && !item.is_archived),
     },
     {
       id: 'archived',
-      title: 'Archived',
+      title: 'DONE',
       items: allItems.filter(item => item.is_archived),
     },
   ])
