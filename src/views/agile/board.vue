@@ -51,7 +51,7 @@
 
         <h2 class="font-bold mb-2">{{ column.title }} ({{ column.items.length }})</h2>
         <div class="scroll-container" :data-list="column.id">
-          <draggable v-model="column.items" :group="{ name: 'kanban', pull: 'clone', put: true }" :itemKey="'id'"
+          <draggable v-model="column.items" :group="{ name: 'kanban', put: true }" :itemKey="'id'"
               @change="(event) => handleDragEnd(event,column)">
             <template #item="{ element }">
               <div :key="element.id" class="border rounded p-2 mb-2"
@@ -123,7 +123,7 @@ async function handleDragEnd(event:any,column: any) {
   const movedItem =event.added.element
   const toColumnId = column.id
   let newStatusId: number = 0
-
+  console.log(movedItem)
   switch (toColumnId) {
     case 1: newStatusId = 2; break
     case 2: newStatusId = 3; break
