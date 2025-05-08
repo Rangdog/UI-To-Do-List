@@ -37,12 +37,26 @@
 
   <!-- Khi đã chọn một project -->
   <div v-else>
-    <div class="mb-6">
-      <button class="text-blue-600 hover:underline text-sm" @click="backToProject">
-        ← Back to Projects
-      </button>
-      <h1 class="text-2xl font-bold mt-2">{{ activeProject.name }}</h1>
-      <p class="text-gray-600">{{ activeProject.description }}</p>
+    <div class="mb-6 bg-white p-4 rounded-lg shadow flex flex-col gap-3">
+      <div class="flex justify-between items-center">
+        <button class="text-blue-600 hover:underline text-sm flex items-center" @click="backToProject">
+          ← Back to Projects
+        </button>
+        <div class="space-x-2">
+          <button @click="showCreateStepModal = true"
+            class="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded hover:bg-green-700">
+            + Create Step
+          </button>
+          <button @click="showCreateTaskModal = true"
+            class="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700">
+            + Create Task
+          </button>
+        </div>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">{{ activeProject.name }}</h1>
+        <p class="text-gray-600">{{ activeProject.description }}</p>
+      </div>
     </div>
 
     <div class="flex">
@@ -52,7 +66,7 @@
         <h2 class="font-bold mb-2">{{ column.title }} ({{ column.items.length }})</h2>
         <div class="scroll-container" :data-list="column.id">
           <draggable v-model="column.items" :group="{ name: 'kanban', put: true }" :itemKey="'id'"
-              @change="(event) => handleDragEnd(event,column)">
+            @change="(event) => handleDragEnd(event, column)">
             <template #item="{ element }">
               <div :key="element.id" class="border rounded p-2 mb-2"
                 :class="element.type === 'step' ? 'bg-blue-50' : 'bg-yellow-50'">
@@ -79,6 +93,87 @@
             </template>
           </draggable>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Step Modal -->
+  <div v-if="showCreateStepModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <div class="px-4 py-5 sm:p-6">
+        <h3 class="text-lg font-medium text-gray-900">
+          Create Step
+        </h3>
+        <form @submit.prevent="handleSubmitCreateStep" class="mt-4 space-y-4">
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700"> Step Name </label>
+            <input id="name" v-model="form.name" type="text" required
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+          </div>
+          <div>
+            <label for="description" class="block text-sm font-medium text-gray-700">
+              Description
+            </label>
+            <textarea id="description" v-model="form.description" rows="3"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+          </div>
+          <div class="flex justify-end space-x-3">
+            <button type="button" @click="showCreateStepModal = false"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="submit"
+              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+              Create
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- Create Task Modal -->
+  <div v-if="showCreateTaskModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+      <div class="px-4 py-5 sm:p-6">
+        <h3 class="text-lg font-medium text-gray-900">
+          Create Task
+        </h3>
+        <form @submit.prevent="handleSubmitCreatTask" class="mt-4 space-y-4">
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700"> Task Name </label>
+            <input id="name" v-model="formTask.name" type="text" required
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" />
+          </div>
+          <div>
+            <label for="description" class="block text-sm font-medium text-gray-700">
+              Description
+            </label>
+            <textarea id="description" v-model="formTask.description" rows="3"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></textarea>
+          </div>
+          <div>
+            <label for="step_id" class="block text-sm font-medium text-gray-700">
+              Step
+            </label>
+            <select id="step_id" v-model="formTask.step_id" required
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+              <option disabled value="">-- Select Step --</option>
+              <option v-for="step in stepStore.stepsAgile" :key="step.step.id" :value="step.step.id">
+                {{ step.step.name }}
+              </option>
+            </select>
+          </div>
+          <div class="flex justify-end space-x-3">
+            <button type="button" @click="showCreateTaskModal = false"
+              class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="submit"
+              class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+              Create
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -118,12 +213,26 @@ const activeProject = ref<any>(null)
 
 const project = computed(() => projectStore.projectsAgile)
 
+const form = ref({
+  name: '',
+  description: '',
+})
+
+const formTask = ref({
+  name: '',
+  description: '',
+  step_id: 0,
+})
+
+const showCreateStepModal = ref(false)
+const showCreateTaskModal = ref(false)
+const createStep = ref(false)
+
 // Hàm xử lý khi kéo thả (drag)
-async function handleDragEnd(event:any,column: any) {
-  const movedItem =event.added.element
+async function handleDragEnd(event: any, column: any) {
+  const movedItem = event.added.element
   const toColumnId = column.id
   let newStatusId: number = 0
-  console.log(movedItem)
   switch (toColumnId) {
     case 1: newStatusId = 2; break
     case 2: newStatusId = 3; break
@@ -135,33 +244,33 @@ async function handleDragEnd(event:any,column: any) {
   if (newStatusId === 4) {
     if (movedItem.type === 'task') {
       const res = await taskStore.updateTaskArchived(movedItem.id)
-      if (res.status){
+      if (res.status) {
         toast.success("Success!")
-      }else{
+      } else {
         toast.error(res.msg + "!")
       }
     } else {
       const res = await stepStore.updateStepArchived(movedItem.id)
-      if (res.status){
+      if (res.status) {
         toast.success("Success!")
-      }else{
+      } else {
         toast.error(res.msg + "!")
       }
     }
   } else if (movedItem.type === 'task') {
     const res = await taskStore.updateTaskStatus(movedItem.id, newStatusId)
-    if (res.status){
-        toast.success("Success!")
-      }else{
-        toast.error(res.msg + "!")
-      }
+    if (res.status) {
+      toast.success("Success!")
+    } else {
+      toast.error(res.msg + "!")
+    }
   } else if (movedItem.type === 'step') {
     const res = await stepStore.updateStepStatus(movedItem.id, newStatusId)
-    if (res.status){
-        toast.success("Success!")
-      }else{
-        toast.error(res.msg + "!")
-      }
+    if (res.status) {
+      toast.success("Success!")
+    } else {
+      toast.error(res.msg + "!")
+    }
   }
 
   // Once the updates are completed, update the Kanban columns and local storage
@@ -174,11 +283,12 @@ async function handleDragEnd(event:any,column: any) {
 
 // Select project
 async function selectProject(project: any) {
-  activeProject.value = project
-  await stepStore.fetchFilteredStepsForAgile(activeProject?.value?.project?.id)
-  await taskStore.fetchFilteredTasksForAgile(activeProject?.value?.project?.id)
+  activeProject.value = project.project
+
+  await stepStore.fetchFilteredStepsForAgile(activeProject?.value?.id)
+  await taskStore.fetchFilteredTasksForAgile(activeProject?.value?.id)
   updateKanbanColumns()
-  localStorage.setItem('projectBoard', JSON.stringify(activeProject?.value?.project?.id))
+  localStorage.setItem('projectBoard', JSON.stringify(activeProject?.value?.id))
   localStorage.setItem('kanbanColumns', JSON.stringify(kanbanStore.kanbanColumns))
   localStorage.setItem('projectId', activeProject?.value?.project?.id)
 }
@@ -189,7 +299,9 @@ const backToProject = () => {
   localStorage.removeItem("projectId")
 }
 
-function updateKanbanColumns() {
+async function updateKanbanColumns() {
+  await stepStore.fetchFilteredStepsForAgile(activeProject?.value?.id)
+  await taskStore.fetchFilteredTasksForAgile(activeProject?.value?.id)
   const steps = stepStore.stepsAgile.map(step => ({
     id: step.step.id,
     name: step.step.name,
@@ -240,20 +352,66 @@ function updateKanbanColumns() {
       items: allItems.filter(item => item.is_archived),
     },
   ])
+  localStorage.setItem('kanbanColumns', JSON.stringify(kanbanStore.kanbanColumns))
 }
 
 // Load data
 onMounted(async () => {
   const project_id = localStorage.getItem('projectBoard')
   if (project_id) {
+    await projectStore.fetchProject(Number(project_id))
     await stepStore.fetchFilteredStepsForAgile(Number(project_id))
     await taskStore.fetchFilteredTasksForAgile(Number(project_id))
     localStorage.setItem("projectId", project_id)
-    activeProject.value = project_id
+    activeProject.value = projectStore.currentProject
     updateKanbanColumns()
   }
   await projectStore.fetchFilteredProjectsForAgile()
 })
+
+const handleSubmitCreateStep = async () => {
+  try {
+    const res = await stepStore.createStep({
+      ...form.value,
+      project_id: activeProject.value.id,
+    })
+    if (res.status) {
+      updateKanbanColumns()
+      toast.success('Created step!')
+    }
+    else {
+      toast.error(res.msg + "!")
+    }
+    showCreateStepModal.value = false
+    form.value = { name: '', description: '' }
+  } catch (error) {
+    console.error('Failed to save task:', error)
+  }
+}
+
+
+const handleSubmitCreatTask = async () => {
+  try {
+    const res = await taskStore.createTask({
+      ...formTask.value,
+      priority: 0,
+      assigner: 0,
+    })
+    if (res.status) {
+      updateKanbanColumns()
+      toast.success('Created task!')
+    }
+    else {
+      toast.error(res.msg + "!")
+    }
+    showCreateTaskModal.value = false
+    formTask.value = { name: '', description: '', step_id: 0 }
+  } catch (error) {
+    console.error('Failed to save task:', error)
+  }
+}
+
+
 </script>
 
 <style scoped>

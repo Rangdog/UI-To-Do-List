@@ -116,7 +116,6 @@ export const useProjectStore = defineStore('project', () => {
     try {
       loading.value = true
       const res = await api.get(`/projects/${id}`)
-      console.log(res)
       currentProject.value = res.data.data.project
       notification.value = res.data.data.notification
     }
