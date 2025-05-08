@@ -463,11 +463,14 @@ const handleSubmitCreatTask = async () => {
 <style scoped>
 .scroll-container {
   max-height: 600px;
-  overflow-y: auto;
+  overflow-y: hidden;
+  position: relative;
   scrollbar-width: thin;
   scrollbar-color: #cbd5e0 #f7fafc;
 }
-
+.scroll-container:hover {
+  overflow-y: auto;
+}
 .scroll-container::-webkit-scrollbar {
   width: 8px;
 }
