@@ -4,7 +4,7 @@
     <header class="bg-white shadow">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div class="flex justify-between items-center">
-          <h1 class="text-2xl font-bold text-gray-900">To-Do List</h1>
+          <h1 class="text-2xl font-bold text-gray-900">Agile Scrum Board</h1>
           <div class="flex items-center space-x-4">
             <span class="text-gray-700">{{ userStore.user?.name }}</span>
             <button @click="handleLogout"
@@ -32,7 +32,7 @@
               <li>
                 <router-link to="/agile_scrum_board" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
                   :class="{ 'bg-gray-100': $route.path.startsWith('/projects') }">
-                  agile scrum board
+                  Agile Scrum Board
                 </router-link>
               </li>
             </ul>

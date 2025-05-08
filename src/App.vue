@@ -5,7 +5,7 @@ import { RouterView } from 'vue-router'
 <template>
   <div id="app">
     <header class="header">
-      <h1>To-Do List</h1>
+      <h1>Agile Scrum Board</h1>
     </header>
     <main>
       <router-view />
